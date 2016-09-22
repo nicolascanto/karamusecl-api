@@ -1,2 +1,2 @@
 vendor/*
-app/api/dbConnect.php
+app/api/lib/dbConnect.php
