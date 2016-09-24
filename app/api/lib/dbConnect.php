@@ -4,7 +4,7 @@
 function getConnection(){
 
 	//Util para cambiar de servidor
-	$server = "local";
+	$server = "development";
 
 	if ($server == "local") {
 		$host = "localhost";
