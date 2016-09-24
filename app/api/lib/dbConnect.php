@@ -14,7 +14,7 @@ function getConnection(){
 	} elseif ($server == "development") {
 		$host = "mysql.hostinger.es";
 		$user = "u643273191_dev";
-		$pass = "qPpt3okoWv";
+		$pass = "etZdEI8zSW";
 		$db_name = "u643273191_dev";
 	} elseif ($server == "production") {
 		$host = "localhost";
