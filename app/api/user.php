@@ -1,8 +1,40 @@
 <?php
 
-$app->post('/api/login/', function($request, $response, $args){
+$app->post('/api/login', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
+	$arraydata = array(
+		"email" => $email);
+
+	if (is_null($email) || is_null($password)) {
+		return $response->withJSON(array(
+			"status" => 400,
+			"message" => "Email y password requeridos"));
+	}
+
+	$mysqli = getConnection();
+	$result = $mysqli->query("SELECT password FROM tbl_bars WHERE email = '$email'");
+	$num_rows = $result->num_rows;
+
+	if ($num_rows > 0) {
+		$row = $result->fetch_assoc();
+		if (password_verify($password, $row['password'])) {
+		    return $response->withJSON(array(
+		    	"status" => 200,
+		    	"message" => "Usuario verificado correctamente",
+		    	"data" => $arraydata));
+		} else {
+		    return $response->withJSON(array(
+		    	"status" => 401,
+		    	"message" => "Usuario y/o password incorrectos",
+		    	"data" => $arraydata));
+		}
+	} else {
+		return $response->withJSON(array(
+			"status" => 404,
+			"message" => "Usuario no existe",
+			"data" => $arraydata));
+	}
 
 });
 
@@ -48,7 +80,9 @@ $app->post('/api/register', function($request, $response, $args){
 			// actualizo los datos del bar
 			$active = true;
 			$password = password_hash($password, PASSWORD_DEFAULT);
-			$query_update_bar = "UPDATE tbl_bars SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, commune = ?, city = ?, active = ?, password = ? WHERE email = '$email';";
+			$query_update_bar = "UPDATE tbl_bars 
+			SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, 
+			commune = ?, city = ?, active = ?, password = ? WHERE email = '$email';";
 			$stmt1 = $mysqli->prepare($query_update_bar);
 			$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
 				$email, $region, $commune, $city, $active, $password);
@@ -89,10 +123,10 @@ $app->post('/api/register', function($request, $response, $args){
 		}
 	} else {
 		$active = false;
-		$query_insert_bar = "INSERT INTO tbl_bars (rut, name, address, phone, email, region, commune, city, active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+		$query_insert_bar = "INSERT INTO tbl_bars (rut, name, address, phone, email, region, commune, city, active, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		$stmt1 = $mysqli->prepare($query_insert_bar);
-		$stmt1->bind_param('ssssssssi', $rut, $name, $address, $phone, 
-			$email, $region, $commune, $city, $active);
+		$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
+			$email, $region, $commune, $city, $active, $password);
 		$stmt1->execute();
 
 		if (json_encode($stmt1->affected_rows)) {
@@ -184,164 +218,19 @@ $app->post('/api/register/validate_token', function($request, $response, $args){
     	}
 });
 
+$app->get('/api/register/gethtml', function($request, $response, $args){
+	$token = "333999";
+	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
+	$fichero = str_replace("mytoken", $token, $fichero);
+	var_dump($fichero);
+});
+
 function getHTML($token){
-	return '                         <!doctype html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-<head>
-  <title></title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<style type="text/css">
-  #outlook a { padding: 0; }
-  .ReadMsgBody { width: 100%; }
-  .ExternalClass { width: 100%; }
-  .ExternalClass * { line-height:100%; }
-  body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-  table, td { border-collapse:collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-  img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-  p { display: block; margin: 13px 0; }
-</style>
-<!--[if !mso]><!-->
-<style type="text/css">
-  @media only screen and (max-width:480px) {
-    @-ms-viewport { width:320px; }
-    @viewport { width:320px; }
-  }
-</style>
-<!--<![endif]-->
-<!--[if mso]>
-<xml>
-  <o:OfficeDocumentSettings>
-    <o:AllowPNG/>
-    <o:PixelsPerInch>96</o:PixelsPerInch>
-  </o:OfficeDocumentSettings>
-</xml>
-<![endif]-->
-
-<!--[if !mso]><!-->
-    <link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css">
-    <style type="text/css">
-
-        @import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);
-
-    </style>
-  <!--<![endif]--><style type="text/css">
-  @media only screen and (min-width:480px) {
-    .mj-column-per-100, * [aria-labelledby="mj-column-per-100"] { width:100%!important; }
-  }
-</style>
-</head>
-<body>
-  <div><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-spacing:0px;" align="center" border="0"><tbody><tr><td style="width:300px;"><img alt="" title="" height="auto" src="http://karamuse.cl/karamusecl/images/karamuse-logo2.png" style="border:none;border-radius:;display:block;outline:none;text-decoration:none;width:100%;height:auto;" width="300"></td></tr></tbody></table></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><p style="font-size:1px;margin:0 auto;border-top:4px solid #808080;width:100%;"></p><!--[if mso | IE]><table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0" style="font-size:1px;margin:0 auto;border-top:4px solid #808080;width:100%;" width="600"><tr><td style="height:0;line-height:0;"> </td></tr></table><![endif]--><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:20px 0px;padding-top:20px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#009BCF;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:24px;line-height:22px;">¡Gracias por registrarte en Karamuse!</div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">Para completar tu registro, haz click en el siguiente link:</div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;" align="center" border="0"><tbody><tr><td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px;" align="center" valign="middle" bgcolor="#009BCF"><a href="http://localhost:9000/#/signup?token=' .$token. '" style="display:inline-block;text-decoration:none;background:#009BCF;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;" target="_blank">
-						Completar registro
-					</a></td></tr></tbody></table></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:20px 0px;padding-bottom:0px;padding-top:30px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">O copia esta url en tu navegador:</span></div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">http://localhost:9000/#/signup?token=' .$token. '</span></div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:20px 0px;padding-bottom:0px;padding-top:30px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">¡Esperamos que disfrutes las sorpresas que tenemos preparadas para ti!</div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">Saludos,</div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]-->
-      <!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" align="center" style="width:600px;">
-        <tr>
-          <td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;">
-      <![endif]--><div style="margin:0 auto;max-width:600px;"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:0px;width:100%;" align="center" border="0"><tbody><tr><td style="text-align:center;vertical-align:top;font-size:0px;padding:0px;"><!--[if mso | IE]>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;width:600px;">
-      <![endif]--><div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align:top;display:inline-block;font-size:13px;text-align:left;width:100%;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0"><tbody><tr><td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center"><div style="cursor:auto;color:#4b4b4b;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;">Team Karamuse</div></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>
-      </td></tr></table>
-      <![endif]--></div>
-</body>
-</html>';
+	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
+	$fichero = str_replace("mytoken", $token, $fichero);
+	return $fichero;
 }
+
 
 
 
