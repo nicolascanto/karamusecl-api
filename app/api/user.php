@@ -16,6 +16,7 @@ $app->post('/api/register', function($request, $response, $args){
 	$region = (isset($request->getParsedBody()['region'])) ? $request->getParsedBody()['region'] : null;
 	$commune = (isset($request->getParsedBody()['commune'])) ? $request->getParsedBody()['commune'] : null;
 	$city = (isset($request->getParsedBody()['city'])) ? $request->getParsedBody()['city'] : null;
+	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
 	$active = (isset($request->getParsedBody()['active'])) ? $request->getParsedBody()['active'] : 0;
 	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
 
@@ -29,7 +30,8 @@ $app->post('/api/register', function($request, $response, $args){
 		"rut" => $rut, 
 		"region" => $region, 
 		"name" => $name,
-		"token" => $token);
+		"token" => $token,
+		"password" => $password);
 
 	$mysqli = getConnection();
 	$result = $mysqli->query("SELECT email, phone, active FROM tbl_bars WHERE email='$email'");
@@ -42,24 +44,24 @@ $app->post('/api/register', function($request, $response, $args){
 			return $response->withJSON(array("status" => 201, 
 				"message" => "El bar ya existe y se encuentra activo"));
 
-		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($commune) && !is_null($city)) {
+		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($commune) && !is_null($city) && !is_null($token) && !is_null($password)) {
 
 			// actualizo los datos del bar
 			$active = true;
-			$query_update_bar = "UPDATE tbl_bars SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, commune = ?, city = ?, active = ? WHERE email = '$email';";
+			$query_update_bar = "UPDATE tbl_bars SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, commune = ?, city = ?, active = ?, password = ? WHERE email = '$email';";
 			$stmt1 = $mysqli->prepare($query_update_bar);
-			$stmt1->bind_param('ssssssssi', $rut, $name, $address, $phone, 
-				$email, $region, $commune, $city, $active);
+			$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
+				$email, $region, $commune, $city, $active, $password);
 			$stmt1->execute();
 
 			if (json_encode($stmt1->affected_rows)) {
 				$message1 = "Se ha completado el segundo registro del bar";
 				
 				//invalidar token de registro
-				$status = false;
+				$state = false;
 				$query_invalidate_token = "UPDATE tbl_active_tokens SET state = ? WHERE token = ?;";
 				$stmt2 = $mysqli->prepare($query_invalidate_token);
-				$stmt2->bind_param('is', $status, $token);
+				$stmt2->bind_param('is', $state, $token);
 				$stmt2->execute();
 				if (json_encode($stmt2->affected_rows)) {
 					$message2 = "Se ha desactivado el token";
