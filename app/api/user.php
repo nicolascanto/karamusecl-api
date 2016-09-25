@@ -45,9 +45,9 @@ $app->post('/api/register', function($request, $response, $args){
 				"message" => "El bar ya existe y se encuentra activo"));
 
 		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($commune) && !is_null($city) && !is_null($token) && !is_null($password)) {
-
 			// actualizo los datos del bar
 			$active = true;
+			$password = password_hash($password, PASSWORD_DEFAULT);
 			$query_update_bar = "UPDATE tbl_bars SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, commune = ?, city = ?, active = ?, password = ? WHERE email = '$email';";
 			$stmt1 = $mysqli->prepare($query_update_bar);
 			$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
