@@ -125,7 +125,7 @@ $app->post('/api/register', function($request, $response, $args){
 			$mail->addBCC('nicolascanto1@gmail.com');
 			$mail->isHTML(true); // Set email format to HTML
 
-			$mail->Subject = '¡Estás a un paso de completar tu registro en Karamuse!';
+			$mail->Subject = '¡Estás a un paso de completar tu registro!';
 			$mail->Body    = getHTML($token);
 			$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 
@@ -157,25 +157,28 @@ $app->post('/api/register', function($request, $response, $args){
 $app->post('/api/register/validate_token', function($request, $response, $args){
 		$mysqli = getConnection();
 		$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
-		$query_validate_token = "SELECT state FROM tbl_active_tokens WHERE token= ?;";
-		$stmt = $mysqli->prepare($query_validate_token);
-		$stmt->bind_param('s', $token);
-		$stmt->execute();
+		$query_validate_token = "SELECT tbl_bars.email, tbl_bars.phone, tbl_active_tokens.state 
+		FROM tbl_active_tokens JOIN tbl_bars ON tbl_bars.id=tbl_active_tokens.id_bar 
+		WHERE tbl_active_tokens.token= '$token';";
+		$result = $mysqli->query($query_validate_token);
+		$row = $result->fetch_assoc();
 
-		/* vincular variables a la sentencia preparada */
-	    $stmt->bind_result($col1);
-
-	    /* obtener valores */
-    	if ($col1) {
+    	if ($row['state']) {
     		return $response->withJSON(array(
     			"status" => 200,
     			"message" => "El token es válido",
-    			"data" => $token));
+    			"data" => array(
+    				"email" => $row['email'],
+    				"phone" => $row['phone'],
+    				"token" => $token)));
     	} else {
     		return $response->withJSON(array(
     			"status" => 400,
     			"message" => "El token es inválido",
-    			"data" => $token));
+    			"data" => array(
+    				"email" => $row['email'],
+    				"phone" => $row['phone'],
+    				"token" => $token)));
     	}
 });
 
