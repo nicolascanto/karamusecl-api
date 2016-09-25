@@ -47,7 +47,7 @@ $app->post('/api/register', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$region = (isset($request->getParsedBody()['region'])) ? $request->getParsedBody()['region'] : null;
 	$commune = (isset($request->getParsedBody()['commune'])) ? $request->getParsedBody()['commune'] : null;
-	$city = (isset($request->getParsedBody()['city'])) ? $request->getParsedBody()['city'] : null;
+	$province = (isset($request->getParsedBody()['province'])) ? $request->getParsedBody()['province'] : null;
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
 	$active = (isset($request->getParsedBody()['active'])) ? $request->getParsedBody()['active'] : 0;
 	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
@@ -57,7 +57,7 @@ $app->post('/api/register', function($request, $response, $args){
 		"email" => $email, 
 		"phone" => $phone, 
 		"address" => $address, 
-		"city" => $city, 
+		"province" => $province, 
 		"commune" => $commune, 
 		"rut" => $rut, 
 		"region" => $region, 
@@ -76,16 +76,16 @@ $app->post('/api/register', function($request, $response, $args){
 			return $response->withJSON(array("status" => 201, 
 				"message" => "El bar ya existe y se encuentra activo"));
 
-		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($commune) && !is_null($city) && !is_null($token) && !is_null($password)) {
+		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($province) && !is_null($commune) && !is_null($token) && !is_null($password)) {
 			// actualizo los datos del bar
 			$active = true;
 			$password = password_hash($password, PASSWORD_DEFAULT);
 			$query_update_bar = "UPDATE tbl_bars 
 			SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, 
-			commune = ?, city = ?, active = ?, password = ? WHERE email = '$email';";
+			commune = ?, province = ?, active = ?, password = ? WHERE email = '$email';";
 			$stmt1 = $mysqli->prepare($query_update_bar);
 			$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
-				$email, $region, $commune, $city, $active, $password);
+				$email, $region, $commune, $province, $active, $password);
 			$stmt1->execute();
 
 			if (json_encode($stmt1->affected_rows)) {
@@ -123,10 +123,10 @@ $app->post('/api/register', function($request, $response, $args){
 		}
 	} else {
 		$active = false;
-		$query_insert_bar = "INSERT INTO tbl_bars (rut, name, address, phone, email, region, commune, city, active, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+		$query_insert_bar = "INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		$stmt1 = $mysqli->prepare($query_insert_bar);
 		$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
-			$email, $region, $commune, $city, $active, $password);
+			$email, $region, $province, $commune, $active, $password);
 		$stmt1->execute();
 
 		if (json_encode($stmt1->affected_rows)) {
