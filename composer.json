@@ -2,6 +2,7 @@
     "require": {
         "slim/slim": "^3.5",
         "phpmailer/phpmailer": "^5.2",
-        "palanik/corsslim": "*"
+        "palanik/corsslim": "*",
+        "paragonie/random_compat": "^2.0"
     }
 }

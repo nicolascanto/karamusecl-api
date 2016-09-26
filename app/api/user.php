@@ -3,8 +3,7 @@
 $app->post('/api/login', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
-	$arraydata = array(
-		"email" => $email);
+	$arraydata = array("email" => $email);
 
 	if (is_null($email) || is_null($password)) {
 		return $response->withJSON(array(
@@ -13,12 +12,20 @@ $app->post('/api/login', function($request, $response, $args){
 	}
 
 	$mysqli = getConnection();
-	$result = $mysqli->query("SELECT password FROM tbl_bars WHERE email = '$email'");
+	$result = $mysqli->query("SELECT password, id FROM tbl_bars WHERE email = '$email'");
 	$num_rows = $result->num_rows;
 
 	if ($num_rows > 0) {
 		$row = $result->fetch_assoc();
 		if (password_verify($password, $row['password'])) {
+
+			$token = getToken();
+			$id_bar = $row['id'];
+			$expired_at = null;
+
+			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, expired_at) 
+				VALUES ($id_bar, '$token', '$expired_at')");
+
 		    return $response->withJSON(array(
 		    	"status" => 200,
 		    	"message" => "Usuario verificado correctamente",
@@ -35,6 +42,9 @@ $app->post('/api/login', function($request, $response, $args){
 			"message" => "Usuario no existe",
 			"data" => $arraydata));
 	}
+
+	$result->close();
+	$mysqli->close();
 
 });
 
@@ -130,7 +140,7 @@ $app->post('/api/register', function($request, $response, $args){
 		$stmt1->execute();
 
 		if (json_encode($stmt1->affected_rows)) {
-			$token = sha1(mt_rand().time().mt_rand().$_SERVER['REMOTE_ADDR']);
+			$token = getToken();
 			$state = 1;
 			$query_active_token = "INSERT INTO tbl_active_tokens (id_bar, token, state) 
 			VALUES (LAST_INSERT_ID(), ?, ?);";
@@ -229,6 +239,10 @@ function getHTML($token){
 	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
 	$fichero = str_replace("mytoken", $token, $fichero);
 	return $fichero;
+}
+
+function getToken(){
+	return sha1(mt_rand().time().mt_rand().$_SERVER['REMOTE_ADDR']);
 }
 
 
