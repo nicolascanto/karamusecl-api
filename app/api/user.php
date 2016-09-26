@@ -3,7 +3,7 @@
 $app->post('/api/login', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
-	$arraydata = array("email" => $email);
+	$response_data = array("email" => $email);
 
 	if (is_null($email) || is_null($password)) {
 		return $response->withJSON(array(
@@ -21,26 +21,29 @@ $app->post('/api/login', function($request, $response, $args){
 
 			$token = getToken();
 			$id_bar = $row['id'];
-			$expired_at = null;
 
 			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, expired_at) 
-				VALUES ($id_bar, '$token', '$expired_at')");
+				VALUES ($id_bar, '$token', null)");
 
-		    return $response->withJSON(array(
+			if ($result) {
+				$response_data['token'] = $token;
+				return $response->withJSON(array(
 		    	"status" => 200,
 		    	"message" => "Usuario verificado correctamente",
-		    	"data" => $arraydata));
+		    	"data" => $response_data));
+			}
+
 		} else {
 		    return $response->withJSON(array(
 		    	"status" => 401,
 		    	"message" => "Usuario y/o password incorrectos",
-		    	"data" => $arraydata));
+		    	"data" => $response_data));
 		}
 	} else {
 		return $response->withJSON(array(
 			"status" => 404,
 			"message" => "Usuario no existe",
-			"data" => $arraydata));
+			"data" => $response_data));
 	}
 
 	$result->close();
@@ -63,7 +66,7 @@ $app->post('/api/register', function($request, $response, $args){
 	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
 
 
-	$arraydata = array(
+	$response_data = array(
 		"email" => $email, 
 		"phone" => $phone, 
 		"address" => $address, 
@@ -83,31 +86,29 @@ $app->post('/api/register', function($request, $response, $args){
 	if ($row_cnt > 0) {
 		if ($row['active']) {
 
-			return $response->withJSON(array("status" => 201, 
-				"message" => "El bar ya existe y se encuentra activo"));
+			return $response->withJSON(array(
+				"status" => 201, 
+				"message" => "El bar ya existe y se encuentra activo",
+				"data" => $response_data));
 
 		} elseif(!is_null($rut) && !is_null($name) && !is_null($address) && !is_null($region) && !is_null($province) && !is_null($commune) && !is_null($token) && !is_null($password)) {
-			// actualizo los datos del bar
+			
+			// ACTUALIZA LOS DATOS DEL BAR
 			$active = true;
 			$password = password_hash($password, PASSWORD_DEFAULT);
-			$query_update_bar = "UPDATE tbl_bars 
-			SET rut = ?, name = ?, address = ?, phone = ?, email = ?, region = ?, 
-			commune = ?, province = ?, active = ?, password = ? WHERE email = '$email';";
-			$stmt1 = $mysqli->prepare($query_update_bar);
-			$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
-				$email, $region, $commune, $province, $active, $password);
-			$stmt1->execute();
+			$result = $mysqli->query("UPDATE tbl_bars 
+			SET rut = '$rut', name = '$name', address = '$address', phone = '$phone', email = '$email', 
+			region = '$region', commune = '$commune', province = '$province', active = $active, 
+			password = '$password' WHERE email = '$email'");
 
-			if (json_encode($stmt1->affected_rows)) {
+			if ($result) {
 				$message1 = "Se ha completado el segundo registro del bar";
 				
-				//invalidar token de registro
+				// INVALIDA TOKEN DE REGISTRO
 				$state = false;
-				$query_invalidate_token = "UPDATE tbl_active_tokens SET state = ? WHERE token = ?;";
-				$stmt2 = $mysqli->prepare($query_invalidate_token);
-				$stmt2->bind_param('is', $state, $token);
-				$stmt2->execute();
-				if (json_encode($stmt2->affected_rows)) {
+				$result = $mysqli->query("UPDATE tbl_active_tokens SET state = $state WHERE token = '$token'");	
+
+				if ($result) {
 					$message2 = "Se ha desactivado el token";
 				} else {
 					$message2 = "No se ha desactivado el token";
@@ -116,39 +117,33 @@ $app->post('/api/register', function($request, $response, $args){
 				return $response->withJSON(array("status" => 201, 
 						"message1" => $message1, 
 						"message2" => $message2, 
-						"data" => $arraydata));
+						"data" => $response_data));
 			} else {
 				return $response->withJSON(array("status" => 402, 
 					"message" => "No se ha completado segundo el registro del bar", 
-					"data" => $arraydata));
+					"data" => $response_data));
 			}
-			$stmt1->close();
-			$stmt2->close();
+
+			$result->close();
 
 		} else {
 	
 			return $response->withJSON(array("status" => 403, 
 				"message" => "No se puede registrar el bar", 
-				"data" => $arraydata));
+				"data" => $response_data));
 		}
 	} else {
 		$active = false;
-		$query_insert_bar = "INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-		$stmt1 = $mysqli->prepare($query_insert_bar);
-		$stmt1->bind_param('ssssssssis', $rut, $name, $address, $phone, 
-			$email, $region, $province, $commune, $active, $password);
-		$stmt1->execute();
+		$result = $mysqli->query("INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (null, null, null, '$phone', '$email', null, 
+			null, null, null, null)");
 
-		if (json_encode($stmt1->affected_rows)) {
+		if ($result) {
 			$token = getToken();
-			$state = 1;
-			$query_active_token = "INSERT INTO tbl_active_tokens (id_bar, token, state) 
-			VALUES (LAST_INSERT_ID(), ?, ?);";
-			$stmt2 = $mysqli->prepare($query_active_token);
-			$stmt2->bind_param('si', $token, $state);
-			$stmt2->execute();
+			$active = true;
+			$result = $mysqli->query("INSERT INTO tbl_active_tokens (id_bar, token, active) 
+			VALUES (LAST_INSERT_ID(), '$token', $active)");
 
-			if (json_encode($stmt2->affected_rows)) {
+			if ($result) {
 				$message1 = "Se ha creado el token de activación";
 			} else {
 				$message1 = "No se ha creado el token de activación";
@@ -157,19 +152,19 @@ $app->post('/api/register', function($request, $response, $args){
 			$mail = new PHPMailer;
 			//$mail->SMTPDebug = 2; // Enable verbose debug output
 			$mail->CharSet = 'UTF-8';
-			$mail->isSMTP(); // Set mailer to use SMTP
-			$mail->Host = 'smtp.gmail.com'; // Specify main and backup SMTP servers
-			$mail->SMTPAuth = true; // Enable SMTP authentication
-			$mail->Username = 'karamuseapp@gmail.com'; // SMTP username
-			$mail->Password = 'inspirate2016'; // SMTP password
-			$mail->SMTPSecure = 'ssl'; // Enable TLS port(587) encryption, `ssl` port(465) also accepted
-			$mail->Port = 465; // TCP port to connect to
+			$mail->isSMTP();
+			$mail->Host = 'smtp.gmail.com';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'karamuseapp@gmail.com';
+			$mail->Password = 'inspirate2016';
+			$mail->SMTPSecure = 'ssl';
+			$mail->Port = 465;
 
 			$mail->setFrom('hola@karamuse.cl', 'Karamuse');
-			$mail->addAddress($email); // Add a recipient
+			$mail->addAddress($email);
 			$mail->addReplyTo('hola@karamuse.cl', 'Information');
 			$mail->addBCC('nicolascanto1@gmail.com');
-			$mail->isHTML(true); // Set email format to HTML
+			$mail->isHTML(true);
 
 			$mail->Subject = '¡Estás a un paso de completar tu registro!';
 			$mail->Body    = getHTML($token);
@@ -184,15 +179,16 @@ $app->post('/api/register', function($request, $response, $args){
 			return $response->withJSON(array("status" => 200, 
 				"message1" => $message1, 
 				"message2" => $message2,
-				"data" => $arraydata));
+				"data" => $response_data));
 
 		} else {
 			return $response->withJSON(array("status" => 401, 
 				"message" => "No se ha completado el primer registro del bar", 
-				"data" => $arraydata));
+				"data" => $response_data));
 		}
-		$stmt1->close();
-		$stmt2->close();
+		
+		$result->close();
+		
 	}
 
 	$mysqli->close();
