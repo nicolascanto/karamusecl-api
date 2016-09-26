@@ -3,6 +3,7 @@
 $app->post('/api/login', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
+	$origin = (isset($request->getParsedBody()['origin'])) ? $request->getParsedBody()['origin'] : null;
 	$response_data = array("email" => $email);
 
 	if (is_null($email) || is_null($password)) {
@@ -13,20 +14,32 @@ $app->post('/api/login', function($request, $response, $args){
 
 	$mysqli = getConnection();
 	$result = $mysqli->query("SELECT password, id FROM tbl_bars WHERE email = '$email'");
-	$num_rows = $result->num_rows;
 
-	if ($num_rows > 0) {
+	if ($result->num_rows > 0) {
 		$row = $result->fetch_assoc();
 		if (password_verify($password, $row['password'])) {
-
-			$token = getToken();
+			
 			$id_bar = $row['id'];
+			
+			// LOGICA CADUCIDAD ACCESS TOKEN
+			// $result = $mysqli->query("SELECT token FROM tbl_access_tokens 
+			// WHERE id_bar = $id_bar ORDER BY created_at DESC LIMIT 1");
 
-			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, expired_at) 
-				VALUES ($id_bar, '$token', null)");
+			// if ($result->num_rows > 0) {
+			// $row = $result->fetch_assoc();
+			// $old_token = $row['token'];
+			// $active = false;
+			// 	$result = $mysqli->query("UPDATE tbl_access_tokens SET active = $active WHERE token = '$old_token'");
+			// }
+
+			$new_token = getToken();
+			$active = true;
+			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, active, origin) 
+				VALUES ($id_bar, '$new_token', $active, '$origin')");
 
 			if ($result) {
-				$response_data['token'] = $token;
+				$response_data['token'] = $new_token;
+				$response_data['origin'] = $origin;
 				return $response->withJSON(array(
 		    	"status" => 200,
 		    	"message" => "Usuario verificado correctamente",
@@ -133,7 +146,6 @@ $app->post('/api/register', function($request, $response, $args){
 				"data" => $response_data));
 		}
 	} else {
-		$active = false;
 		$result = $mysqli->query("INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (null, null, null, '$phone', '$email', null, 
 			null, null, null, null)");
 
