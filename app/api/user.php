@@ -179,7 +179,7 @@ $app->post('/api/register', function($request, $response, $args){
 			$mail->isHTML(true);
 
 			$mail->Subject = '¡Estás a un paso de completar tu registro!';
-			$mail->Body    = getHTML($token);
+			$mail->Body    = getHTML_register($token);
 			$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 
 			if(!$mail->send()) {
@@ -209,48 +209,175 @@ $app->post('/api/register', function($request, $response, $args){
 });
 
 $app->post('/api/register/validate_token', function($request, $response, $args){
-		$mysqli = getConnection();
+		
 		$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
-		$query_validate_token = "SELECT tbl_bars.email, tbl_bars.phone, tbl_active_tokens.state 
+		$response_data = array(
+			"token" => $token);
+
+		$mysqli = getConnection();
+		$result = $mysqli->query("SELECT tbl_bars.email, tbl_bars.phone, tbl_active_tokens.active 
 		FROM tbl_active_tokens JOIN tbl_bars ON tbl_bars.id=tbl_active_tokens.id_bar 
-		WHERE tbl_active_tokens.token= '$token';";
-		$result = $mysqli->query($query_validate_token);
+		WHERE tbl_active_tokens.token= '$token'");
 		$row = $result->fetch_assoc();
 
-    	if ($row['state']) {
+		$response_data['email'] = $row['email'];
+		$response_data['phone'] = $row['phone'];
+
+    	if ($row['active']) {
     		return $response->withJSON(array(
     			"status" => 200,
     			"message" => "El token es válido",
-    			"data" => array(
-    				"email" => $row['email'],
-    				"phone" => $row['phone'],
-    				"token" => $token)));
+    			"data" => $response_data));
     	} else {
     		return $response->withJSON(array(
     			"status" => 400,
     			"message" => "El token es inválido",
-    			"data" => array(
-    				"email" => $row['email'],
-    				"phone" => $row['phone'],
-    				"token" => $token)));
+    			"data" => $response_data));
     	}
 });
 
-$app->get('/api/register/gethtml', function($request, $response, $args){
-	$token = "333999";
-	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
-	$fichero = str_replace("mytoken", $token, $fichero);
-	var_dump($fichero);
+$app->post('/api/register/renewpass/{step}', function($request, $response, $args){
+	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
+	$code = (isset($request->getParsedBody()['code'])) ? $request->getParsedBody()['code'] : null;
+	$old_pass = (isset($request->getParsedBody()['old_pass'])) ? $request->getParsedBody()['old_pass'] : null;
+	$new_pass = (isset($request->getParsedBody()['new_pass'])) ? $request->getParsedBody()['new_pass'] : null;
+	$response_data = array(
+		"email" => $email,
+		"code" => $code,
+		"old_pass" => $old_pass,
+		"new_pass" => $new_pass);
+
+	if (is_numeric($args['step'])) {
+		$mysqli = getConnection();
+			switch ($args['step']) {
+				
+				case 1: // ENVIAR EMAIL
+				if (!is_null($email)) {
+					$result = $mysqli->query("SELECT id FROM tbl_bars WHERE email = '$email'");
+					$row = $result->fetch_assoc();
+					if ($result->num_rows > 0) {
+						$id_bar = $row['id'];
+						$code = mt_rand(1000,9999);
+						$active = true;
+						$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, code, active) VALUES
+							($id_bar, $code, $active)");
+
+						if ($result) {
+							$opts = array(
+								"email" => $email,
+								"subject" => "Haz solicitado recuperar tu contraseña",
+								"body" => getHTML_renew_pass(),
+								"code" => $code);
+
+							 if (sendEmail($opts)) {
+							 	return $response->withJSON(array(
+								"status" => 200,
+								"message" => "Email enviado",
+								"data" => $response_data));
+							 } else {
+							 	return $response->withJSON(array(
+								"status" => 405,
+								"message" => "Email no enviado",
+								"data" => $response_data));
+							 }
+						} else {
+							return $response->withJSON(array(
+							"status" => 400,
+							"message" => "No se pudo realizar la operación",
+							"data" => $response_data));
+						}
+					} else {
+						return $response->withJSON(array(
+						"status" => 404,
+						"message" => "Bar no encontrado",
+						"data" => $response_data));
+					}
+				} else {
+					return $response->withJSON(array(
+					"status" => 403,
+					"message" => "Email requerido",
+					"data" => $response_data));
+				}
+
+					break;
+
+				case 2: // VALIDAR CODIGO
+				if (!is_null($code)) {
+					$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE code = '$code' AND active = true");
+					if ($result->num_rows > 0) {
+						return $response->withJSON(array(
+						"status" => 200,
+						"message" => "Código verificado",
+						"data" => $response_data));
+					} else {
+						return $response->withJSON(array(
+						"status" => 401,
+						"message" => "No se pudo verificar el código",
+						"data" => $response_data));
+					}			
+				} else {
+					return $response->withJSON(array(
+						"status" => 402,
+						"message" => "Código requerido",
+						"data" => $response_data));
+				}
+
+					break;
+
+				case 3: // CAMBIAR PASSWORD
+					# code...
+					break;
+			}
+
+	} else {
+		return $response->withJSON(array(
+		"status" => 405,
+		"message" => "Step not found",
+		"data" => $response_data));
+	}
 });
 
-function getHTML($token){
+function getHTML_register($token){
 	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
 	$fichero = str_replace("mytoken", $token, $fichero);
 	return $fichero;
 }
 
+function getHTML_renew_pass(){
+	$fichero = file_get_contents('http://www.google.com');
+	return $fichero;
+}
+
 function getToken(){
 	return sha1(mt_rand().time().mt_rand().$_SERVER['REMOTE_ADDR']);
+}
+
+function sendEmail($opts) {
+	$mail = new PHPMailer;
+	//$mail->SMTPDebug = 2; // Enable verbose debug output
+	$mail->CharSet = 'UTF-8';
+	$mail->isSMTP();
+	$mail->Host = 'smtp.gmail.com';
+	$mail->SMTPAuth = true;
+	$mail->Username = 'karamuseapp@gmail.com';
+	$mail->Password = 'inspirate2016';
+	$mail->SMTPSecure = 'ssl';
+	$mail->Port = 465;
+
+	$mail->setFrom('hola@karamuse.cl', 'Karamuse');
+	$mail->addAddress($opts['email']);
+	$mail->addReplyTo('hola@karamuse.cl', 'Information');
+	$mail->addBCC('nicolascanto1@gmail.com');
+	$mail->isHTML(true);
+
+	$mail->Subject = $opts['subject'];
+	$mail->Body = $opts['body'];
+
+	if(!$mail->send()) {
+	    return false;
+	} else {
+	    return true;
+	}
 }
 
 
