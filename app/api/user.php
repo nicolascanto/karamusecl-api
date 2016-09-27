@@ -258,7 +258,7 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 							$token = getToken();
 							$active = true;
 							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active) 
-								VALUES ($id_bar, $token, $active)");
+								VALUES ($id_bar, '$token', $active)");
 
 							if ($result) {
 								$opts = array(
@@ -300,13 +300,49 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 					break;
 
 				case 2: // VALIDAR CODIGO
-					if (!is_null($token)) {
+					if (!is_null($token) && !is_null($new_pass)) {
 						$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE token = '$token' AND active = true");
 						if ($result->num_rows > 0) {
-							return $response->withJSON(array(
-							"status" => 200,
-							"message" => "token verificado",
-							"data" => $response_data));
+
+							$result = $mysqli->query("SELECT tbl_bars.email FROM tbl_renew_pass 
+								JOIN tbl_bars ON tbl_renew_pass.id_bar=tbl_bars.id 
+								WHERE tbl_renew_pass.token = '$token' 
+								AND tbl_renew_pass.active = true");
+							// $2y$10$Ug.TgbKEW5u0cCKaMEOuI.qQlncPjW9eLF9bnGOxDPYSCG72tcKa2
+							// $2y$10$MsyL546p2983jlVs77cXS.7hzzX.HHZBpmkTIiTTxyBtJUPRcC1Q6
+
+							if ($result->num_rows > 0) {
+								$row = $result->fetch_assoc();
+								$email = $row['email'];
+								$new_pass = password_hash($new_pass, PASSWORD_DEFAULT);
+
+								$result = $mysqli->query("UPDATE tbl_bars 
+									SET password = '$new_pass'
+									WHERE email = '$email'");
+
+								if ($result) {
+									$result = $mysqli->query("UPDATE tbl_renew_pass 
+										SET active = false
+										WHERE token = '$token'");
+									if ($result) {
+										return $response->withJSON(array(
+										"status" => 200,
+										"message" => "Se ha cambiado la contraseña exitosamente",
+										"data" => $response_data));
+									} else {
+										return $response->withJSON(array(
+										"status" => 201,
+										"message" => "Se ha cambiado la contraseña exitosamente, pero no se desactivó el token",
+										"data" => $response_data));
+									}
+								}
+							} else {
+								return $response->withJSON(array(
+								"status" => 400,
+								"message" => "No se pudo realizar la operación",
+								"data" => $response_data));
+							}
+
 						} else {
 							return $response->withJSON(array(
 							"status" => 401,
@@ -316,20 +352,11 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 					} else {
 						return $response->withJSON(array(
 							"status" => 402,
-							"message" => "token requerido",
+							"message" => "token y/o password requerido",
 							"data" => $response_data));
 					}
 
 						break;
-
-					case 3: // CAMBIAR PASSWORD
-					if (!is_null($new_pass) && !is_null($email)) {
-						$result = $mysqli->query("UPDATE tbl_bars 
-							SET password = '$new_pass'
-							WHERE email = '$email'");
-						
-					}
-					break;
 			}
 
 	} else {
