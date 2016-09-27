@@ -255,16 +255,16 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 						$row = $result->fetch_assoc();
 						if ($result->num_rows > 0) {
 							$id_bar = $row['id'];
-							$token = mt_rand(1000,9999);
+							$token = getToken();
 							$active = true;
-							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active) VALUES
-								($id_bar, $token, $active)");
+							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active) 
+								VALUES ($id_bar, $token, $active)");
 
 							if ($result) {
 								$opts = array(
 									"email" => $email,
 									"subject" => "Haz solicitado recuperar tu contraseña",
-									"body" => getHTML_renew_pass($email),
+									"body" => getHTML_renew_pass($email, $token),
 									"token" => $token);
 
 								 if (sendEmail($opts)) {
