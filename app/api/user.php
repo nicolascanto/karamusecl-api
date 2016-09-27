@@ -238,11 +238,11 @@ $app->post('/api/register/validate_token', function($request, $response, $args){
 
 $app->post('/api/register/renewpass/{step}', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
-	$code = (isset($request->getParsedBody()['code'])) ? $request->getParsedBody()['code'] : null;
+	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
 	$new_pass = (isset($request->getParsedBody()['new_pass'])) ? $request->getParsedBody()['new_pass'] : null;
 	$response_data = array(
 		"email" => $email,
-		"code" => $code,
+		"token" => $token,
 		"new_pass" => $new_pass);
 
 	if (is_numeric($args['step'])) {
@@ -255,17 +255,17 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 						$row = $result->fetch_assoc();
 						if ($result->num_rows > 0) {
 							$id_bar = $row['id'];
-							$code = mt_rand(1000,9999);
+							$token = mt_rand(1000,9999);
 							$active = true;
-							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, code, active) VALUES
-								($id_bar, $code, $active)");
+							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active) VALUES
+								($id_bar, $token, $active)");
 
 							if ($result) {
 								$opts = array(
 									"email" => $email,
 									"subject" => "Haz solicitado recuperar tu contraseña",
-									"body" => getHTML_renew_pass(),
-									"code" => $code);
+									"body" => getHTML_renew_pass($email),
+									"token" => $token);
 
 								 if (sendEmail($opts)) {
 								 	return $response->withJSON(array(
@@ -300,8 +300,8 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 					break;
 
 				case 2: // VALIDAR CODIGO
-					if (!is_null($code)) {
-						$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE code = '$code' AND active = true");
+					if (!is_null($token)) {
+						$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE token = '$token' AND active = true");
 						if ($result->num_rows > 0) {
 							return $response->withJSON(array(
 							"status" => 200,
@@ -346,9 +346,10 @@ function getHTML_register($token){
 	return $fichero;
 }
 
-function getHTML_renew_pass(){
+function getHTML_renew_pass($email, $token){
 	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/token_renew_pass.html');
-	$fichero = str_replace("[email]", $token, $fichero);
+	$fichero = str_replace("[email]", $email, $fichero);
+	$fichero = str_replace("[token]", $token, $fichero);
 	return $fichero;
 }
 

@@ -4,7 +4,7 @@
 function getConnection(){
 
 	//Util para cambiar de servidor
-	$server = "development";
+	$server = "local";
 
 	switch ($server) {
 		case 'local':
