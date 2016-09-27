@@ -305,18 +305,18 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 						if ($result->num_rows > 0) {
 							return $response->withJSON(array(
 							"status" => 200,
-							"message" => "Código verificado",
+							"message" => "token verificado",
 							"data" => $response_data));
 						} else {
 							return $response->withJSON(array(
 							"status" => 401,
-							"message" => "No se pudo verificar el código",
+							"message" => "No se pudo verificar el token",
 							"data" => $response_data));
 						}			
 					} else {
 						return $response->withJSON(array(
 							"status" => 402,
-							"message" => "Código requerido",
+							"message" => "token requerido",
 							"data" => $response_data));
 					}
 
