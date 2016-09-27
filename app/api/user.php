@@ -239,93 +239,96 @@ $app->post('/api/register/validate_token', function($request, $response, $args){
 $app->post('/api/register/renewpass/{step}', function($request, $response, $args){
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$code = (isset($request->getParsedBody()['code'])) ? $request->getParsedBody()['code'] : null;
-	$old_pass = (isset($request->getParsedBody()['old_pass'])) ? $request->getParsedBody()['old_pass'] : null;
 	$new_pass = (isset($request->getParsedBody()['new_pass'])) ? $request->getParsedBody()['new_pass'] : null;
 	$response_data = array(
 		"email" => $email,
 		"code" => $code,
-		"old_pass" => $old_pass,
 		"new_pass" => $new_pass);
 
 	if (is_numeric($args['step'])) {
 		$mysqli = getConnection();
+			
 			switch ($args['step']) {
-				
 				case 1: // ENVIAR EMAIL
-				if (!is_null($email)) {
-					$result = $mysqli->query("SELECT id FROM tbl_bars WHERE email = '$email'");
-					$row = $result->fetch_assoc();
-					if ($result->num_rows > 0) {
-						$id_bar = $row['id'];
-						$code = mt_rand(1000,9999);
-						$active = true;
-						$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, code, active) VALUES
-							($id_bar, $code, $active)");
+					if (!is_null($email)) {
+						$result = $mysqli->query("SELECT id FROM tbl_bars WHERE email = '$email'");
+						$row = $result->fetch_assoc();
+						if ($result->num_rows > 0) {
+							$id_bar = $row['id'];
+							$code = mt_rand(1000,9999);
+							$active = true;
+							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, code, active) VALUES
+								($id_bar, $code, $active)");
 
-						if ($result) {
-							$opts = array(
-								"email" => $email,
-								"subject" => "Haz solicitado recuperar tu contraseña",
-								"body" => getHTML_renew_pass(),
-								"code" => $code);
+							if ($result) {
+								$opts = array(
+									"email" => $email,
+									"subject" => "Haz solicitado recuperar tu contraseña",
+									"body" => getHTML_renew_pass(),
+									"code" => $code);
 
-							 if (sendEmail($opts)) {
-							 	return $response->withJSON(array(
-								"status" => 200,
-								"message" => "Email enviado",
+								 if (sendEmail($opts)) {
+								 	return $response->withJSON(array(
+									"status" => 200,
+									"message" => "Email enviado",
+									"data" => $response_data));
+								 } else {
+								 	return $response->withJSON(array(
+									"status" => 405,
+									"message" => "Email no enviado",
+									"data" => $response_data));
+								 }
+							} else {
+								return $response->withJSON(array(
+								"status" => 400,
+								"message" => "No se pudo realizar la operación",
 								"data" => $response_data));
-							 } else {
-							 	return $response->withJSON(array(
-								"status" => 405,
-								"message" => "Email no enviado",
-								"data" => $response_data));
-							 }
+							}
 						} else {
 							return $response->withJSON(array(
-							"status" => 400,
-							"message" => "No se pudo realizar la operación",
+							"status" => 404,
+							"message" => "Bar no encontrado",
 							"data" => $response_data));
 						}
 					} else {
 						return $response->withJSON(array(
-						"status" => 404,
-						"message" => "Bar no encontrado",
+						"status" => 403,
+						"message" => "Email requerido",
 						"data" => $response_data));
 					}
-				} else {
-					return $response->withJSON(array(
-					"status" => 403,
-					"message" => "Email requerido",
-					"data" => $response_data));
-				}
 
 					break;
 
 				case 2: // VALIDAR CODIGO
-				if (!is_null($code)) {
-					$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE code = '$code' AND active = true");
-					if ($result->num_rows > 0) {
-						return $response->withJSON(array(
-						"status" => 200,
-						"message" => "Código verificado",
-						"data" => $response_data));
+					if (!is_null($code)) {
+						$result = $mysqli->query("SELECT * FROM tbl_renew_pass WHERE code = '$code' AND active = true");
+						if ($result->num_rows > 0) {
+							return $response->withJSON(array(
+							"status" => 200,
+							"message" => "Código verificado",
+							"data" => $response_data));
+						} else {
+							return $response->withJSON(array(
+							"status" => 401,
+							"message" => "No se pudo verificar el código",
+							"data" => $response_data));
+						}			
 					} else {
 						return $response->withJSON(array(
-						"status" => 401,
-						"message" => "No se pudo verificar el código",
-						"data" => $response_data));
-					}			
-				} else {
-					return $response->withJSON(array(
-						"status" => 402,
-						"message" => "Código requerido",
-						"data" => $response_data));
-				}
+							"status" => 402,
+							"message" => "Código requerido",
+							"data" => $response_data));
+					}
 
-					break;
+						break;
 
-				case 3: // CAMBIAR PASSWORD
-					# code...
+					case 3: // CAMBIAR PASSWORD
+					if (!is_null($new_pass) && !is_null($email)) {
+						$result = $mysqli->query("UPDATE tbl_bars 
+							SET password = '$new_pass'
+							WHERE email = '$email'");
+						
+					}
 					break;
 			}
 
@@ -339,12 +342,13 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 
 function getHTML_register($token){
 	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
-	$fichero = str_replace("mytoken", $token, $fichero);
+	$fichero = str_replace("[token]", $token, $fichero);
 	return $fichero;
 }
 
 function getHTML_renew_pass(){
-	$fichero = file_get_contents('http://www.google.com');
+	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/token_renew_pass.html');
+	$fichero = str_replace("[email]", $token, $fichero);
 	return $fichero;
 }
 
