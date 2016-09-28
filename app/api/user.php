@@ -361,7 +361,7 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 
 	} else {
 		return $response->withJSON(array(
-		"status" => 405,
+		"status" => 406,
 		"message" => "Step not found",
 		"data" => $response_data));
 	}
