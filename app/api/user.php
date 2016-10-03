@@ -13,7 +13,7 @@ $app->post('/api/login', function($request, $response, $args){
 	}
 
 	$mysqli = getConnection();
-	$result = $mysqli->query("SELECT password, id FROM tbl_bars WHERE email = '$email'");
+	$result = $mysqli->query("SELECT password, id FROM tbl_bars WHERE email = '$email' AND active = true");
 
 	if ($result->num_rows > 0) {
 		$row = $result->fetch_assoc();
@@ -38,12 +38,44 @@ $app->post('/api/login', function($request, $response, $args){
 				VALUES ($id_bar, '$new_token', $active, '$origin')");
 
 			if ($result) {
-				$response_data['token'] = $new_token;
-				$response_data['origin'] = $origin;
-				return $response->withJSON(array(
-		    	"status" => 200,
-		    	"message" => "Usuario verificado correctamente",
-		    	"data" => $response_data));
+
+				$result = $mysqli->query("SELECT active, created_at FROM tbl_sessions 
+					WHERE id_bar = $id_bar AND active = true");
+
+				// VALIDO SI HAY SESIONES ABIERTAS, SI NO CREO UNA SESIÓN
+				if ($result->num_rows > 0) {
+					$row = $result->fetch_assoc();
+					$response_data['token'] = $new_token;
+					$response_data['origin'] = $origin;
+					$response_data['session'] = array(
+						"active" => true,
+						"created_at" => $row['created_at']);
+					return $response->withJSON(array(
+			    	"status" => 200,
+			    	"message" => "Usuario verificado correctamente",
+			    	"data" => $response_data));
+				} else {
+					
+					$result = $mysqli->query("INSERT INTO tbl_sessions (id_bar, active)
+						VALUES ($id_bar, true)");
+
+					if ($result) {
+						$last_id = $mysqli->insert_id;
+						$stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) VALUES (?, ?, 0)");	
+						$stmt->bind_param('ii', $last_id, $code);
+						for ($i = 0; $i < 50 ; $i++) { 	
+							$code = mt_rand(1000,9999);
+							$stmt->execute();
+						}
+					}
+					$response_data['session'] = array(
+						"active" => false,
+						"created_at" => "fecha creacion");
+					return $response->withJSON(array(
+			    	"status" => 200,
+			    	"message" => "Usuario verificado correctamente",
+			    	"data" => $response_data));
+				}
 			}
 
 		} else {
@@ -55,7 +87,7 @@ $app->post('/api/login', function($request, $response, $args){
 	} else {
 		return $response->withJSON(array(
 			"status" => 404,
-			"message" => "Usuario no existe",
+			"message" => "cuenta no existe o se encuentra desactivada",
 			"data" => $response_data));
 	}
 
@@ -63,6 +95,10 @@ $app->post('/api/login', function($request, $response, $args){
 	$mysqli->close();
 
 });
+
+$app->post('/api/codes', function($request, $response, $args){
+	$count = (isset($request->getParsedBody()['count'])) ? $request->getParsedBody()['count'] : null;
+}
 
 $app->post('/api/register', function($request, $response, $args){
 
@@ -100,7 +136,7 @@ $app->post('/api/register', function($request, $response, $args){
 		if ($row['active']) {
 
 			return $response->withJSON(array(
-				"status" => 201, 
+				"status" => 202, 
 				"message" => "El bar ya existe y se encuentra activo",
 				"data" => $response_data));
 
