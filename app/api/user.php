@@ -98,7 +98,7 @@ $app->post('/api/login', function($request, $response, $args){
 
 $app->post('/api/codes', function($request, $response, $args){
 	$count = (isset($request->getParsedBody()['count'])) ? $request->getParsedBody()['count'] : null;
-}
+});
 
 $app->post('/api/register', function($request, $response, $args){
 
