@@ -32,7 +32,7 @@ $app->post('/api/sessions/{type}', function($request, $response, $args){
 					$row = $result->fetch_assoc();
 					return $response->withJSON(array(
 						"status" => 200,
-						"message" => "Session opened",
+						"message" => "Sesión abierta",
 						"data" => array("id_session" => $row['id'],
 							"created_at" => $row['created_at'],
 							"origin" => $row['origin']))); 
