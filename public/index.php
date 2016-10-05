@@ -16,12 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 require_once('../app/api/lib/tokenController.php');
+require_once('../app/api/lib/dbConnect.php');
 
 $authorization = function($request, $response, $next){
 	$token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
 	$token = new token;
 	if ($token->validate($token_request)) {
-		return $next($request, $response);
+		$mysqli = getConnection();
+		$result = $mysqli->query("SELECT id_bar FROM tbl_access_tokens WHERE token = '$token_request'");
+		if ($result->num_rows > 0) {
+			$row = $result->fetch_assoc();
+			$id_bar = $row['id_bar'];
+			$request = $request->withAttribute('id_bar', $id_bar);
+			return $next($request, $response);
+		}
+		
 	} else {
 		return $response->withJSON(array(
 			"status" => 401,
@@ -31,7 +40,7 @@ $authorization = function($request, $response, $next){
 
 require_once('../vendor/phpmailer/phpmailer/PHPMailerAutoload.php');
 require_once('../vendor/paragonie/random_compat/lib/random.php');
-require_once('../app/api/lib/dbConnect.php');
+
 require_once('../app/api/catalog.php');
 require_once('../app/api/load.php');
 require_once('../app/api/user.php');

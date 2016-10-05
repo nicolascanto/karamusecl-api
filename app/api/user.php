@@ -56,8 +56,8 @@ $app->post('/api/login', function($request, $response, $args){
 			    	"data" => $response_data));
 				} else {
 					
-					$result = $mysqli->query("INSERT INTO tbl_sessions (id_bar, active)
-						VALUES ($id_bar, true)");
+					// $result = $mysqli->query("INSERT INTO tbl_sessions (id_bar, active)
+					// 	VALUES ($id_bar, true)");
 
 					if ($result) {
 						// $last_id = $mysqli->insert_id;
@@ -68,9 +68,10 @@ $app->post('/api/login', function($request, $response, $args){
 						// 	$stmt->execute();
 						// }
 					}
+					$response_data['token'] = $new_token;
 					$response_data['session'] = array(
 						"active" => false,
-						"created_at" => "fecha creacion");
+						"created_at" => null);
 					return $response->withJSON(array(
 			    	"status" => 200,
 			    	"message" => "Usuario verificado correctamente",
