@@ -15,11 +15,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
 }
 
+require_once('../app/api/lib/tokenController.php');
+
+$authorization = function($request, $response, $next){
+	$token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
+	$token = new token;
+	if ($token->validate($token_request)) {
+		return $next($request, $response);
+	} else {
+		return $response->withJSON(array(
+			"status" => 401,
+			"message" => "Invalid token or expired"));
+	}
+};
+
 require_once('../vendor/phpmailer/phpmailer/PHPMailerAutoload.php');
 require_once('../vendor/paragonie/random_compat/lib/random.php');
 require_once('../app/api/lib/dbConnect.php');
 require_once('../app/api/catalog.php');
 require_once('../app/api/load.php');
 require_once('../app/api/user.php');
+require_once('../app/api/sessions.php');
 
 $app->run();

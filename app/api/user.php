@@ -13,24 +13,24 @@ $app->post('/api/login', function($request, $response, $args){
 	}
 
 	$mysqli = getConnection();
-	$result = $mysqli->query("SELECT password, id FROM tbl_bars WHERE email = '$email' AND active = true");
+	$result = $mysqli->query("SELECT tbl_bars.password, tbl_bars.id, tbl_bars.email, tbl_bars.name, 
+		tbl_bars.address, tbl_bar_settings.avatar 
+		FROM tbl_bars JOIN tbl_bar_settings ON tbl_bar_settings.id_bar = tbl_bars.id 
+		WHERE tbl_bars.email = '$email' AND tbl_bars.active = true");
 
 	if ($result->num_rows > 0) {
 		$row = $result->fetch_assoc();
 		if (password_verify($password, $row['password'])) {
 			
 			$id_bar = $row['id'];
+			$response_data['email'] = $row['email'];
+			$response_data['name'] = $row['name'];
+			$response_data['address'] = $row['address'];
+			$response_data['avatar'] = $row['avatar'];
 			
 			// LOGICA CADUCIDAD ACCESS TOKEN
-			// $result = $mysqli->query("SELECT token FROM tbl_access_tokens 
-			// WHERE id_bar = $id_bar ORDER BY created_at DESC LIMIT 1");
-
-			// if ($result->num_rows > 0) {
-			// $row = $result->fetch_assoc();
-			// $old_token = $row['token'];
-			// $active = false;
-			// 	$result = $mysqli->query("UPDATE tbl_access_tokens SET active = $active WHERE token = '$old_token'");
-			// }
+			// ...
+			// FIN
 
 			$new_token = getToken();
 			$active = true;
@@ -60,13 +60,13 @@ $app->post('/api/login', function($request, $response, $args){
 						VALUES ($id_bar, true)");
 
 					if ($result) {
-						$last_id = $mysqli->insert_id;
-						$stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) VALUES (?, ?, 0)");	
-						$stmt->bind_param('ii', $last_id, $code);
-						for ($i = 0; $i < 50 ; $i++) { 	
-							$code = mt_rand(1000,9999);
-							$stmt->execute();
-						}
+						// $last_id = $mysqli->insert_id;
+						// $stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) VALUES (?, ?, 0)");	
+						// $stmt->bind_param('ii', $last_id, $code);
+						// for ($i = 0; $i < 50 ; $i++) { 	
+						// 	$code = mt_rand(1000,9999);
+						// 	$stmt->execute();
+						// }
 					}
 					$response_data['session'] = array(
 						"active" => false,
@@ -94,10 +94,6 @@ $app->post('/api/login', function($request, $response, $args){
 	$result->close();
 	$mysqli->close();
 
-});
-
-$app->post('/api/codes', function($request, $response, $args){
-	$count = (isset($request->getParsedBody()['count'])) ? $request->getParsedBody()['count'] : null;
 });
 
 $app->post('/api/register', function($request, $response, $args){
@@ -216,7 +212,7 @@ $app->post('/api/register', function($request, $response, $args){
 
 			$mail->Subject = '¡Estás a un paso de completar tu registro!';
 			$mail->Body    = getHTML_register($token);
-			$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+			$mail->AltBody = '...';
 
 			if(!$mail->send()) {
 			    $message2 = 'El primer registro está correcto, pero Mailer Error: ' . $mail->ErrorInfo;
