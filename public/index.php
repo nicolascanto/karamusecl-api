@@ -19,7 +19,8 @@ require_once('../app/api/lib/tokenController.php');
 require_once('../app/api/lib/dbConnect.php');
 
 $authorization = function($request, $response, $next){
-	$token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
+	// $token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
+	$token_request = $request->getQueryParam('token', $default = null);
 	$token = new token;
 	if ($token->validate($token_request)) {
 		$mysqli = getConnection();
@@ -45,5 +46,6 @@ require_once('../app/api/catalog.php');
 require_once('../app/api/load.php');
 require_once('../app/api/user.php');
 require_once('../app/api/sessions.php');
+require_once('../app/api/codes.php');
 
 $app->run();
