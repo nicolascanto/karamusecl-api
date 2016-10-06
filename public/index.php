@@ -22,7 +22,7 @@ $authorization = function($request, $response, $next){
 
 	if ($request->isGet()) {
 		$token_request = $request->getQueryParam('token', $default = null);
-	} elseif ($request->isPost()) {
+	} elseif ($request->isPost() || $request->isPut()) {
 		$token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
 	}
 
