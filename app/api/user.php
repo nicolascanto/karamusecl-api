@@ -56,18 +56,6 @@ $app->post('/api/login', function($request, $response, $args){
 			    	"data" => $response_data));
 				} else {
 					
-					// $result = $mysqli->query("INSERT INTO tbl_sessions (id_bar, active)
-					// 	VALUES ($id_bar, true)");
-
-					if ($result) {
-						// $last_id = $mysqli->insert_id;
-						// $stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) VALUES (?, ?, 0)");	
-						// $stmt->bind_param('ii', $last_id, $code);
-						// for ($i = 0; $i < 50 ; $i++) { 	
-						// 	$code = mt_rand(1000,9999);
-						// 	$stmt->execute();
-						// }
-					}
 					$response_data['token'] = $new_token;
 					$response_data['session'] = array(
 						"active" => false,

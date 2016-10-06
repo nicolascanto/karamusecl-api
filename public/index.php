@@ -19,12 +19,20 @@ require_once('../app/api/lib/tokenController.php');
 require_once('../app/api/lib/dbConnect.php');
 
 $authorization = function($request, $response, $next){
-	// $token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
-	$token_request = $request->getQueryParam('token', $default = null);
+
+	if ($request->isGet()) {
+		$token_request = $request->getQueryParam('token', $default = null);
+	} elseif ($request->isPost()) {
+		$token_request = isset($request->getParsedBody()['token']) ? $request->getParsedBody()['token'] : null;
+	}
+
 	$token = new token;
+	
 	if ($token->validate($token_request)) {
+		
 		$mysqli = getConnection();
 		$result = $mysqli->query("SELECT id_bar FROM tbl_access_tokens WHERE token = '$token_request'");
+		
 		if ($result->num_rows > 0) {
 			$row = $result->fetch_assoc();
 			$id_bar = $row['id_bar'];
@@ -37,6 +45,7 @@ $authorization = function($request, $response, $next){
 			"status" => 401,
 			"message" => "Invalid token or expired"));
 	}
+	$mysqli->close();
 };
 
 require_once('../vendor/phpmailer/phpmailer/PHPMailerAutoload.php');
