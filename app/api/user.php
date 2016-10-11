@@ -170,6 +170,11 @@ $app->post('/api/register', function($request, $response, $args){
 		$result = $mysqli->query("INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (null, null, null, '$phone', '$email', null, 
 			null, null, null, null)");
 
+		$last_id_bar = $mysqli->insert_id;
+
+		$result = $mysqli->query("INSERT INTO tbl_bar_settings (id_bar, order_limit, avatar) 
+			VALUES ($last_id_bar, 20, null)");
+
 		if ($result) {
 			$token = getToken();
 			$active = true;
@@ -217,7 +222,8 @@ $app->post('/api/register', function($request, $response, $args){
 		} else {
 			return $response->withJSON(array("status" => 401, 
 				"message" => "No se ha completado el primer registro del bar", 
-				"data" => $response_data));
+				"data" => $response_data,
+				"extra" => $last_id_bar));
 		}
 		
 		$result->close();

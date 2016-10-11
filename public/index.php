@@ -15,8 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
 }
 
-require_once('../app/api/lib/tokenController.php');
 require_once('../app/api/lib/dbConnect.php');
+require_once('../app/api/lib/tokenController.php');
+require_once('../app/api/lib/utilsClass.php');
 
 $authorization = function($request, $response, $next){
 
@@ -49,12 +50,12 @@ $authorization = function($request, $response, $next){
 };
 
 require_once('../vendor/phpmailer/phpmailer/PHPMailerAutoload.php');
-require_once('../vendor/paragonie/random_compat/lib/random.php');
 
 require_once('../app/api/catalog.php');
 require_once('../app/api/load.php');
 require_once('../app/api/user.php');
 require_once('../app/api/sessions.php');
 require_once('../app/api/codes.php');
+require_once('../app/api/orders.php');
 
 $app->run();

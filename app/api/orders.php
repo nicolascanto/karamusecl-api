@@ -1,0 +1,106 @@
+<?php
+
+$app->post('/api/orders', function($request, $response, $args){
+
+	$id_bar = $request->getAttribute('id_bar');
+	$orderArr = (isset($request->getParsedBody()['order'])) ? $request->getParsedBody()['order'] : array();
+	$session = new session;
+	$id_session = $session->id_session($id_bar);
+
+	if ($id_session['success']) {
+		$id = $id_session['id'];
+		$ticket = new ticket;
+		$last_ticket = $ticket->last_ticket($id_session['id']);
+
+		if ($last_ticket['success']) {
+			$last = $last_ticket['last'];
+			$ticket = $last + 1;
+
+			$order = new order;
+			$order_verified = $order->check_order($orderArr, $id_session['id']);
+
+			if ($order_verified['success']) {
+				$verified = $order_verified['data'];
+				$mysqli = getConnection();
+				$stmt = $mysqli->prepare("INSERT INTO tbl_orders (id_bar, id_session, origin, ticket, 
+				id_karaoke, message, state) VALUES (?, ?, ?, ?, ?, ?, ?)");
+				$stmt->bind_param('iisiisi', $id_bar, $id, $origin, $ticket, $id_karaoke, $message, $state);
+
+				foreach ($verified as $_order) {
+					$origin = $_order['origin'];
+					$id_karaoke = $_order['id_karaoke'];
+					$message = $_order['message'];
+					$state = 0;
+					if ($_order['add_order']) {
+						$stmt->execute();
+					}
+				}
+
+				return $response->withJSON(array("status" => 200, "message" => "Pedidos verificados", 
+					"data" => $verified));	
+
+			} else {
+				return $response->withJSON($order_verified);
+			}
+
+		
+		} else {
+			return $response->withJSON($last_ticket);
+		}
+
+	} else {
+		return $response->withJSON($id_session);
+	}
+
+})->add($authorization);
+
+$app->put('/api/orders/{id_order}', function($request, $response, $args){
+
+	$state = (isset($request->getParsedBody()['state'])) ? $request->getParsedBody()['state'] : null;
+
+	if ((isset($args['id_order']) && is_numeric($args['id_order'])) && (!is_null($state) && is_numeric($state))) {
+	
+		$id_order = $args['id_order'];
+		$mysqli = getConnection();
+		$result = $mysqli->query("UPDATE tbl_orders SET state = $state WHERE id = $id_order");
+
+		if ($mysqli->affected_rows > 0) {
+			return $response->withJSON(array("status" => 200, "message" => "Se ha actualizado el estado del pedido"));
+		} else {
+			return $response->withJSON(array("status" => 400, "message" => "No se ha actualizado el estado del pedido"));
+		}
+
+	} else {
+		return $response->withJSON(array("status" => 402, "message" => "Debes especificar ID y estado del pedido"));
+	}
+
+})->add($authorization);
+
+$app->get('/api/orders/{id_order}', function($request, $response, $args){
+
+	$order = new order;
+	$getOrders = $order->getOrders(array("id_order" => $args['id_order']));
+
+	if ($getOrders['success']) {
+		return $response->withJSON(array("status" => 200, "message" => "Se ha obtenido el pedido", "data" => $getOrders['data']));
+	} else {
+		return $response->withJSON(array("status" => 404, "message" => "No hay pedidos para ID especificado"));
+	}
+
+})->add($authorization);
+
+
+$app->get('/api/orders', function($request, $response, $args){
+
+	$order = new order;
+	$getOrders = $order->getOrders(null);
+
+	if ($getOrders['success']) {
+		return $response->withJSON(array("status" => 200, "message" => "Se han obtenido los pedidos", "data" => $getOrders['data']));
+	} else {
+		return $response->withJSON(array("status" => 404, "message" => "No hay pedidos en la sesión"));
+	}
+
+})->add($authorization);
+
+
