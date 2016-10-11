@@ -25,7 +25,7 @@ class ticket {
 			$row = $result->fetch_assoc();
 			return array("success" => true, "last" => $row['max(ticket)']);
 		} else {
-			return array("status" => 403, "message" => "Ocurrió un error al obtener el último ticket");
+			return array("status" => 405, "message" => "Ocurrió un error al obtener el último ticket");
 		}
 	}
 }
