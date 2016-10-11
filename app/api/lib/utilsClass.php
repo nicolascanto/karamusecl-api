@@ -64,7 +64,7 @@ class order {
 		}
 	}
 
-	public function getOrders ($params) {
+	public function getOrders ($params, $id_session = false) {
 
 		$mysqli = getConnection();
 
@@ -80,9 +80,9 @@ class order {
 				return array("success" => false, "data" => null);
 			}
 
-		} elseif (is_null($params)) {
+		} elseif (is_null($params) && $id_session) {
 
-			$result = $mysqli->query("SELECT * FROM tbl_orders");
+			$result = $mysqli->query("SELECT * FROM tbl_orders WHERE id_session = $id_session");
 			$dataResponse = array();
 			if ($result->num_rows > 0) {
 				while ($row = $result->fetch_assoc()) {
@@ -98,6 +98,22 @@ class order {
 			return array("success" => false);
 
 		}
+	}
+}
+
+class code {
+
+	public function verify ($code, $id_session) {
+		$mysqli = getConnection();
+		$result = $mysqli->query("SELECT code FROM tbl_session_codes WHERE code = $code 
+			AND id_session = $id_session AND state = 1");
+
+		if ($result->num_rows > 0) {
+			return array("success" => true);
+		} else {
+			return array("status" => 403, "message" => "Client forbidden", "code_client_request" => $code, "id_session" => $id_session);
+		}
+
 	}
 }
 

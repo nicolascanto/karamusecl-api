@@ -7,7 +7,7 @@ $app->get('/api/codes/verify', function($request, $response, $args){
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
 
-	if ($id_session['success']) {
+	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
 		$result = $mysqli->query("SELECT code, state FROM tbl_session_codes WHERE id_session = $id");
 		
@@ -39,7 +39,7 @@ $app->post('/api/codes/{lot}', function($request, $response, $args){
 		$session = new session;
 		$id_session = $session->id_session($id_bar);
 
-		if ($id_session['success']) {
+		if (isset($id_session['success']) && $id_session['success']) {
 			$id = $id_session['id'];
 			$count = $args['lot'];
 			$codesArr = array();
@@ -56,7 +56,7 @@ $app->post('/api/codes/{lot}', function($request, $response, $args){
 				
 					$stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) 
 						VALUES (?, ?, 0)");
-					$stmt->bind_param('ii', $id_session, $code);
+					$stmt->bind_param('ii', $id, $code);
 					for ($i = 0; $i < $count ; $i++) { 	
 						$code = mt_rand(1000,9999);
 						$stmt->execute();
@@ -64,7 +64,7 @@ $app->post('/api/codes/{lot}', function($request, $response, $args){
 					}
 
 					return $response->withJSON(array("status" => 200, "message" => "Se han generado los códigos",
-						"total" => $count_codes, "data" => $codesArr));
+						"total" => $count_codes, "data" => $codesArr, "id_session" => $id));
 				}
 			}
 
@@ -87,7 +87,7 @@ $app->put('/api/codes/{code}/state/{state}', function($request, $response, $args
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
 
-	if ($id_session['success']) {
+	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
 		$mysqli->query("UPDATE tbl_session_codes SET state = $state 
 			WHERE code = $code AND id_session = $id");

@@ -3,23 +3,36 @@
 $app->post('/api/orders', function($request, $response, $args){
 
 	$id_bar = $request->getAttribute('id_bar');
+	$scope = $request->getAttribute('scope');
 	$orderArr = (isset($request->getParsedBody()['order'])) ? $request->getParsedBody()['order'] : array();
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
 
-	if ($id_session['success']) {
+	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
+
+		// VERIFICA SI VIENE DE CLIENTE
+		if ($scope == "CLIENT") {
+			$code_client = (isset($request->getParsedBody()['code_client'])) ? $request->getParsedBody()['code_client'] : null;
+			$code = new code;
+			$verify = $code->verify($code_client, $id_session['id']);
+
+			if (!isset($verify['success']) && !$verify['success']) {
+				return $response->withJSON($verify);
+			} 
+		}
+
 		$ticket = new ticket;
 		$last_ticket = $ticket->last_ticket($id_session['id']);
 
-		if ($last_ticket['success']) {
+		if (isset($last_ticket['success']) && $last_ticket['success']) {
 			$last = $last_ticket['last'];
 			$ticket = $last + 1;
 
 			$order = new order;
 			$order_verified = $order->check_order($orderArr, $id_session['id']);
 
-			if ($order_verified['success']) {
+			if (isset($order_verified['success']) && $order_verified['success']) {
 				$verified = $order_verified['data'];
 				$mysqli = getConnection();
 				$stmt = $mysqli->prepare("INSERT INTO tbl_orders (id_bar, id_session, origin, ticket, 
@@ -37,7 +50,7 @@ $app->post('/api/orders', function($request, $response, $args){
 				}
 
 				return $response->withJSON(array("status" => 200, "message" => "Pedidos verificados", 
-					"data" => $verified));	
+					"data" => $verified, "scope" => $scope));	
 
 			} else {
 				return $response->withJSON($order_verified);
@@ -81,7 +94,7 @@ $app->get('/api/orders/{id_order}', function($request, $response, $args){
 	$order = new order;
 	$getOrders = $order->getOrders(array("id_order" => $args['id_order']));
 
-	if ($getOrders['success']) {
+	if (isset($getOrders['success']) && $getOrders['success']) {
 		return $response->withJSON(array("status" => 200, "message" => "Se ha obtenido el pedido", "data" => $getOrders['data']));
 	} else {
 		return $response->withJSON(array("status" => 404, "message" => "No hay pedidos para ID especificado"));
@@ -92,13 +105,21 @@ $app->get('/api/orders/{id_order}', function($request, $response, $args){
 
 $app->get('/api/orders', function($request, $response, $args){
 
-	$order = new order;
-	$getOrders = $order->getOrders(null);
+	$id_bar = $request->getAttribute('id_bar');
+	$session = new session;
+	$id_session = $session->id_session($id_bar);
 
-	if ($getOrders['success']) {
-		return $response->withJSON(array("status" => 200, "message" => "Se han obtenido los pedidos", "data" => $getOrders['data']));
+	if (isset($id_session['success']) && $id_session['success']) {
+		$order = new order;
+		$getOrders = $order->getOrders(null, $id_session['id']);
+
+		if (isset($getOrders['success']) && $getOrders['success']) {
+			return $response->withJSON(array("status" => 200, "message" => "Se han obtenido los pedidos", "data" => $getOrders['data']));
+		} else {
+			return $response->withJSON(array("status" => 404, "message" => "No hay pedidos en la sesión"));
+		}
 	} else {
-		return $response->withJSON(array("status" => 404, "message" => "No hay pedidos en la sesión"));
+		return $response->withJSON($id_session);
 	}
 
 })->add($authorization);

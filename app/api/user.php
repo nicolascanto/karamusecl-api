@@ -33,9 +33,10 @@ $app->post('/api/login', function($request, $response, $args){
 			// FIN
 
 			$new_token = getToken();
+			$scope = "DJ";
 			$active = true;
-			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, active, origin) 
-				VALUES ($id_bar, '$new_token', $active, '$origin')");
+			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, scope, active, origin) 
+				VALUES ($id_bar, '$new_token', '$scope', $active, '$origin')");
 
 			if ($result) {
 

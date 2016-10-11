@@ -32,12 +32,12 @@ $authorization = function($request, $response, $next){
 	if ($token->validate($token_request)) {
 		
 		$mysqli = getConnection();
-		$result = $mysqli->query("SELECT id_bar FROM tbl_access_tokens WHERE token = '$token_request'");
+		$result = $mysqli->query("SELECT id_bar, scope FROM tbl_access_tokens WHERE token = '$token_request'");
 		
 		if ($result->num_rows > 0) {
 			$row = $result->fetch_assoc();
-			$id_bar = $row['id_bar'];
-			$request = $request->withAttribute('id_bar', $id_bar);
+			$request = $request->withAttribute('id_bar', $row['id_bar']);
+			$request = $request->withAttribute('scope', $row['scope']);
 			return $next($request, $response);
 		}
 		
