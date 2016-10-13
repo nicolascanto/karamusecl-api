@@ -11,7 +11,7 @@ $app->post('/api/orders', function($request, $response, $args){
 	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
 
-		// VERIFICA SI VIENE DE CLIENTE
+		// Verifica si el scope es CLIENT ó DJ
 		if ($scope == "CLIENT") {
 			$code_client = (isset($request->getParsedBody()['code_client'])) ? $request->getParsedBody()['code_client'] : null;
 			$code = new code;
@@ -20,6 +20,8 @@ $app->post('/api/orders', function($request, $response, $args){
 			if (!isset($verify['success']) && !$verify['success']) {
 				return $response->withJSON($verify);
 			} 
+		} else {
+			$code_client = "DJ";
 		}
 
 		$ticket = new ticket;
@@ -35,9 +37,9 @@ $app->post('/api/orders', function($request, $response, $args){
 			if (isset($order_verified['success']) && $order_verified['success']) {
 				$verified = $order_verified['data'];
 				$mysqli = getConnection();
-				$stmt = $mysqli->prepare("INSERT INTO tbl_orders (id_bar, id_session, origin, ticket, 
-				id_karaoke, message, state) VALUES (?, ?, ?, ?, ?, ?, ?)");
-				$stmt->bind_param('iisiisi', $id_bar, $id, $origin, $ticket, $id_karaoke, $message, $state);
+				$stmt = $mysqli->prepare("INSERT INTO tbl_orders (id_bar, id_session, origin, code_client, ticket, 
+				id_karaoke, message, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+				$stmt->bind_param('iissiisi', $id_bar, $id, $origin, $code_client, $ticket, $id_karaoke, $message, $state);
 
 				foreach ($verified as $_order) {
 					$origin = $_order['origin'];
