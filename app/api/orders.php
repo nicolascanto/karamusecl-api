@@ -5,6 +5,7 @@ $app->post('/api/orders', function($request, $response, $args){
 	$id_bar = $request->getAttribute('id_bar');
 	$scope = $request->getAttribute('scope');
 	$orderArr = (isset($request->getParsedBody()['order'])) ? $request->getParsedBody()['order'] : array();
+	$message = (isset($request->getParsedBody()['message'])) ? $request->getParsedBody()['message'] : null;
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
 
@@ -32,7 +33,14 @@ $app->post('/api/orders', function($request, $response, $args){
 			$ticket = $last + 1;
 
 			$order = new order;
-			$order_verified = $order->check_order($orderArr, $id_session['id']);
+			
+			$maxOrdersNow = $order->maxOrdersNow(array("id_session" => $id, "id_bar" => $id_bar));
+			if ($maxOrdersNow < count($orderArr)) {
+				return $response->withJSON(array("status" => 406, "message" => "Cupos limitados", "capacity" => $maxOrdersNow));
+			}
+
+			$order_verified = $order->check_order(array("orderArr" => $orderArr, 
+				"id_session" => $id_session['id'], "message" => $message));
 
 			if (isset($order_verified['success']) && $order_verified['success']) {
 				$verified = $order_verified['data'];
@@ -44,7 +52,6 @@ $app->post('/api/orders', function($request, $response, $args){
 				foreach ($verified as $_order) {
 					$origin = $_order['origin'];
 					$id_karaoke = $_order['id_karaoke'];
-					$message = $_order['message'];
 					$state = 0;
 					if ($_order['add_order']) {
 						$stmt->execute();
@@ -52,7 +59,7 @@ $app->post('/api/orders', function($request, $response, $args){
 				}
 
 				return $response->withJSON(array("status" => 200, "message" => "Pedidos verificados", 
-					"data" => $verified, "scope" => $scope));	
+					"message_client" => $message, "data" => $verified, "scope" => $scope));	
 
 			} else {
 				return $response->withJSON($order_verified);

@@ -60,6 +60,13 @@ function init($part, $chan, $test){
 			$title = $link->innertext;
 			$length = $span_length->innertext;
 			$time = $span_time->innertext;
+			$min = substr($time, 0, -3);
+			$min = intval($min);
+			if ($min < 10) {
+				$time = "00:0" . $time;
+			} else {
+				$time = "00:" . $time;
+			}
 			$seen = $li_seen->innertext;
 			$published = $li_published->innertext;
 
@@ -84,7 +91,7 @@ function init($part, $chan, $test){
 	}
 }
 
-init(1, 'Karaoke Channel International', true); //comentar al hacer load
+//init(1, 'karaokes_latinos', true); //comentar al hacer load
 
 
 

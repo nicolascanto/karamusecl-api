@@ -57,5 +57,6 @@ require_once('../app/api/user.php');
 require_once('../app/api/sessions.php');
 require_once('../app/api/codes.php');
 require_once('../app/api/orders.php');
+require_once('../app/api/settings.php');
 
 $app->run();

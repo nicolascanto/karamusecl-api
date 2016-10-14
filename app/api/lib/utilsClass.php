@@ -32,7 +32,9 @@ class ticket {
 
 class order {
 
-	public function check_order ($orderArr, $id_session) {
+	public function check_order ($params) {
+		$id_session = $params['id_session'];
+		$orderArr = $params['orderArr'];
 		$newOrderArr = array();
 		$orderData = array();
 		$mysqli = getConnection();
@@ -52,7 +54,6 @@ class order {
 				}
 				$orderData['id_karaoke'] = $order['id_karaoke'];
 				$orderData['origin'] = $order['origin'];
-				$orderData['message'] = $order['message'];
 				$newOrderArr[] = $orderData;
 
 			}
@@ -87,7 +88,7 @@ class order {
 			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes.title, tbl_karaokes.url, tbl_karaokes.time, tbl_orders.state, tbl_orders.created_at 
 				FROM tbl_orders JOIN tbl_karaokes ON tbl_orders.id_karaoke = tbl_karaokes.id 
 				WHERE id_session = $id_session AND state <> 2");
-			
+
 			$dataResponse = array();
 			if ($result->num_rows > 0) {
 				while ($row = $result->fetch_assoc()) {
@@ -103,6 +104,25 @@ class order {
 			return array("success" => false);
 
 		}
+	}
+
+	public function maxOrdersNow ($params) {
+
+		$id_session = $params['id_session'];
+		$id_bar = $params['id_bar'];
+
+		$mysqli = getConnection();
+		$result = $mysqli->query("SELECT order_limit, (SELECT COUNT(*) FROM tbl_orders 
+			WHERE id_session = $id_session) AS num_orders FROM tbl_bar_settings WHERE id_bar = $id_bar");
+		
+		if ($result->num_rows > 0) {	
+			$row = $result->fetch_assoc();
+			$maxOrdersNow = $row['order_limit'] - $row['num_orders'];
+			return $maxOrdersNow;
+		} else {
+			return false;
+		}
+
 	}
 }
 
