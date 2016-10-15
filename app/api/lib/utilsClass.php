@@ -142,6 +142,23 @@ class code {
 	}
 }
 
+class paging {
+	public function compute ($sizePage, $numPage, $totalResults) {
+
+		//examino la página a mostrar y el inicio del registro a mostrar
+		if (is_null($numPage)) {
+		   $start = 0;
+		   $numPage = 1;
+		}
+		else {
+		   $start = ($numPage - 1) * $sizePage;
+		}
+		//calculo el total de páginas
+		$totalPages = ceil($totalResults / $sizePage);
+		return array("start" => $start, "totalPages" => $totalPages);
+	}
+}
+
 
 
 
