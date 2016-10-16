@@ -39,4 +39,4 @@
 
  	$mysqli->close();
 
- });
+ })->add($authorization);

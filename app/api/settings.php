@@ -18,3 +18,18 @@ $app->put('/api/settings/order_limit/{limit}', function($request, $response, $ar
 	}
 	
 })->add($authorization);
+
+$app->get('/api/settings', function($request, $response, $args){
+
+	$id_bar = $request->getAttribute('id_bar');
+
+	$mysqli = getConnection();
+	$result = $mysqli->query("SELECT * FROM tbl_bar_settings WHERE id_bar = $id_bar");
+
+	if ($result->num_rows > 0) {
+		$row = $result->fetch_assoc();
+		return $response->withJSON(array("status" => 200, "message" => "Configuraciones para el bar", "data" => $row));
+	} else {
+		return $response->withJSON(array("status" => 404, "message" => "No hay configuraciones para el bar"));
+	}
+})->add($authorization);
