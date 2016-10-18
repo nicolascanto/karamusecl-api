@@ -121,9 +121,11 @@ $app->get('/api/orders', function($request, $response, $args){
 	if (isset($id_session['success']) && $id_session['success']) {
 		$order = new order;
 		$getOrders = $order->getOrders(null, $id_session['id']);
+		$totalOrders = $order->totalOrders($id_session['id']);
 
 		if (isset($getOrders['success']) && $getOrders['success']) {
-			return $response->withJSON(array("status" => 200, "message" => "Se han obtenido los pedidos", "data" => $getOrders['data']));
+			return $response->withJSON(array("status" => 200, "message" => "Se han obtenido los pedidos", 
+				"total" => $totalOrders,"data" => $getOrders['data']));
 		} else {
 			return $response->withJSON(array("status" => 404, "message" => "No hay pedidos en la sesión"));
 		}

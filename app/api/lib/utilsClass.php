@@ -87,7 +87,7 @@ class order {
 
 			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes.title, tbl_karaokes.url, tbl_karaokes.time, tbl_orders.state, tbl_orders.created_at 
 				FROM tbl_orders JOIN tbl_karaokes ON tbl_orders.id_karaoke = tbl_karaokes.id 
-				WHERE id_session = $id_session AND state <> 2 ORDER BY tbl_orders.state ASC, tbl_orders.created_at DESC");
+				WHERE tbl_orders.id_session = $id_session AND tbl_orders.state <> 2 ORDER BY tbl_orders.state ASC, tbl_orders.created_at DESC");
 
 			$dataResponse = array();
 			if ($result->num_rows > 0) {
@@ -123,6 +123,18 @@ class order {
 			return false;
 		}
 
+	}
+
+	public function totalOrders ($id_session) {
+		$mysqli = getConnection();
+		$result = $mysqli->query("SELECT count(*) FROM tbl_orders WHERE id_session = $id_session");
+		
+		if ($result->num_rows > 0) {	
+			$row = $result->fetch_assoc();
+			return $row['count(*)'];
+		} else {
+			return false;
+		}
 	}
 }
 
