@@ -42,7 +42,10 @@ $app->put('/api/settings', function($request, $response, $args){
 	$avatar = isset($request->getParsedBody()['avatar']) ? $request->getParsedBody()['avatar'] : null;
 	$bar_name = isset($request->getParsedBody()['bar_name']) ? $request->getParsedBody()['bar_name'] : null;
 	$address = isset($request->getParsedBody()['address']) ? $request->getParsedBody()['address'] : null;
-	$mysqli = getConnection();
+	
+	if (!is_null($order_limit) && is_numeric($order_limit) && $order_limit > 60) {
+		return $response->withJSON(array("status" => 400, "message" => "Límite de pedidos excedido"));
+	}
 	
 	$updateArr = array(
 		array(
@@ -58,6 +61,7 @@ $app->put('/api/settings', function($request, $response, $args){
 			"address" => $address,
 			"updated" => false));
 
+	$mysqli = getConnection();
 	
 	if (!is_null($updateArr[0]['order_limit'])) {
 		$result = $mysqli->query("UPDATE tbl_bar_settings SET order_limit = $order_limit WHERE id_bar = $id_bar");
