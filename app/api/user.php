@@ -180,7 +180,7 @@ $app->post('/api/register', function($request, $response, $args){
 			$token = getToken();
 			$active = true;
 			$result = $mysqli->query("INSERT INTO tbl_active_tokens (id_bar, token, active) 
-			VALUES (LAST_INSERT_ID(), '$token', $active)");
+			VALUES ($last_id_bar, '$token', $active)");
 
 			if ($result) {
 				$message1 = "Se ha creado el token de activación";
