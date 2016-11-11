@@ -5,7 +5,7 @@ $app->post('/api/orders', function($request, $response, $args){
 	$id_bar = $request->getAttribute('id_bar');
 	$scope = $request->getAttribute('scope');
 	$orderArr = (isset($request->getParsedBody()['order'])) ? $request->getParsedBody()['order'] : array();
-	$message = (isset($request->getParsedBody()['message'])) ? $request->getParsedBody()['message'] : null;
+	$origin = (isset($request->getParsedBody()['origin'])) ? $request->getParsedBody()['origin'] : null;
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
 
@@ -40,7 +40,7 @@ $app->post('/api/orders', function($request, $response, $args){
 			}
 
 			$order_verified = $order->check_order(array("orderArr" => $orderArr, 
-				"id_session" => $id_session['id'], "message" => $message));
+				"id_session" => $id_session['id']));
 
 			if (isset($order_verified['success']) && $order_verified['success']) {
 				$verified = $order_verified['data'];
@@ -50,7 +50,7 @@ $app->post('/api/orders', function($request, $response, $args){
 				$stmt->bind_param('iissiisi', $id_bar, $id, $origin, $code_client, $ticket, $id_karaoke, $message, $state);
 
 				foreach ($verified as $_order) {
-					$origin = $_order['origin'];
+					$message = $_order['message'];
 					$id_karaoke = $_order['id_karaoke'];
 					$state = 0;
 					if ($_order['add_order']) {

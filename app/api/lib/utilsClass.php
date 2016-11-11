@@ -53,7 +53,7 @@ class order {
 					$orderData['add_order'] = true;
 				}
 				$orderData['id_karaoke'] = $order['id_karaoke'];
-				$orderData['origin'] = $order['origin'];
+				$orderData['message'] = $order['message'];
 				$newOrderArr[] = $orderData;
 
 			}
