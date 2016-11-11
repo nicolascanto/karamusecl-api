@@ -2,14 +2,27 @@
 
 $app->get('/api/client/bars', function($request, $response, $args){
 	$mysqli = getConnection();
-	$result = $mysqli->query("SELECT tbl_bars.id, tbl_bars.name, tbl_bars.address, tbl_bar_settings.avatar 
+	$result = $mysqli->query("SELECT tbl_bars.id, tbl_bars.name, tbl_bars.address, tbl_bar_settings.avatar, 
+		tbl_bar_settings.banner_ad, tbl_bar_settings.text_ad 
 		FROM tbl_bars JOIN tbl_bar_settings ON tbl_bars.id = tbl_bar_settings.id_bar
 		WHERE tbl_bars.active = true");
 
 	if ($result->num_rows > 0) {
 		$bars = array();
+		$settings = array();
+		$info = array();
 		while ($row = $result->fetch_assoc()) {
-			$bars[] = $row;
+			
+			$row['settings'] = $settings;
+			$info['id'] = $row['id'];
+			$info['name'] = $row['name'];
+			$info['address'] = $row['address'];
+			$info['settings'] = array(
+				"avatar" => $row['avatar'],
+				"banner_ad" => $row['banner_ad'],
+				"text_ad" => $row['text_ad']);
+
+			$bars[] = $info;
 		}
 		return $response->withJSON(array("status" => 200, "message" => "Listado de bares activos", 
 			"data" => $bars));

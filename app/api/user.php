@@ -173,8 +173,8 @@ $app->post('/api/register', function($request, $response, $args){
 
 		$last_id_bar = $mysqli->insert_id;
 
-		$result = $mysqli->query("INSERT INTO tbl_bar_settings (id_bar, order_limit, avatar) 
-			VALUES ($last_id_bar, 20, null)");
+		$result = $mysqli->query("INSERT INTO tbl_bar_settings (id_bar, order_limit, avatar, banner_ad, text_ad) 
+			VALUES ($last_id_bar, 20, null, null, null)");
 
 		if ($result) {
 			$token = getToken();

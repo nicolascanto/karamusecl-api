@@ -42,6 +42,8 @@ $app->put('/api/settings', function($request, $response, $args){
 	$avatar = isset($request->getParsedBody()['avatar']) ? $request->getParsedBody()['avatar'] : null;
 	$bar_name = isset($request->getParsedBody()['bar_name']) ? $request->getParsedBody()['bar_name'] : null;
 	$address = isset($request->getParsedBody()['address']) ? $request->getParsedBody()['address'] : null;
+	$banner_ad = isset($request->getParsedBody()['banner_ad']) ? $request->getParsedBody()['banner_ad'] : null;
+	$text_ad = isset($request->getParsedBody()['text_ad']) ? $request->getParsedBody()['text_ad'] : null;
 	
 	if (!is_null($order_limit) && is_numeric($order_limit) && $order_limit > 60) {
 		return $response->withJSON(array("status" => 400, "message" => "Límite de pedidos excedido"));
@@ -59,6 +61,12 @@ $app->put('/api/settings', function($request, $response, $args){
 			"updated" => false),
 		array(
 			"address" => $address,
+			"updated" => false),
+		array(
+			"banner_ad" => $banner_ad,
+			"updated" => false),
+		array(
+			"text_ad" => $text_ad,
 			"updated" => false));
 
 	$mysqli = getConnection();
@@ -88,6 +96,20 @@ $app->put('/api/settings', function($request, $response, $args){
 		$result = $mysqli->query("UPDATE tbl_bars SET address = '$address' WHERE id = $id_bar");
 		if ($mysqli->affected_rows > 0) {
 			$updateArr[3]['updated'] = true;
+		}
+	}
+
+	if (!is_null($updateArr[4]['banner_ad'])) {
+		$result = $mysqli->query("UPDATE tbl_bar_settings SET banner_ad = '$banner_ad' WHERE id_bar = $id_bar");
+		if ($mysqli->affected_rows > 0) {
+			$updateArr[4]['updated'] = true;
+		}
+	}
+
+	if (!is_null($updateArr[5]['text_ad'])) {
+		$result = $mysqli->query("UPDATE tbl_bar_settings SET text_ad = '$text_ad' WHERE id_bar = $id_bar");
+		if ($mysqli->affected_rows > 0) {
+			$updateArr[5]['updated'] = true;
 		}
 	}
 	
