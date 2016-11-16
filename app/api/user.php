@@ -384,6 +384,58 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 	}
 });
 
+/* 
+https://apis.modernizacion.cl/dpa/regiones
+https://apis.modernizacion.cl/dpa/regiones/{codigo}/provincias
+https://apis.modernizacion.cl/dpa/regiones/{codigo}/provincias/{codigo}/comunas                        
+para obtener las regiones
+para obtener las provincias de una región
+para obtener las comunas de una región de una provincia
+*/
+
+$app->get('/api/dpa/regiones', function($request, $response, $args){
+	
+	$url = "https://apis.modernizacion.cl/dpa/regiones";
+	$ch = curl_init();  
+ 
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+ 
+    $output = curl_exec($ch);
+ 	$regions = json_decode($output);
+    curl_close($ch);
+    return $response->withJSON(array("status" => 200, "message" => "Regiones de Chile", "data" => $regions));
+});
+
+$app->get('/api/dpa/regiones/{codigo_r}/provincias', function($request, $response, $args){
+	$codigo_r = $args['codigo_r'];
+	$url = "https://apis.modernizacion.cl/dpa/regiones/" . $codigo_r . "/provincias";
+	$ch = curl_init();  
+ 
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+ 
+    $output = curl_exec($ch);
+ 	$provinces = json_decode($output);
+    curl_close($ch);
+    return $response->withJSON(array("status" => 200, "message" => "Provincias", "data" => $provinces));
+});
+
+$app->get('/api/dpa/regiones/{codigo_r}/provincias/{codigo_p}/comunas', function($request, $response, $args){
+	$codigo_r = $args['codigo_r'];
+	$codigo_p = $args['codigo_p'];
+	$url = "https://apis.modernizacion.cl/dpa/regiones/" . $codigo_r . "/provincias/" . $codigo_p . "/comunas";
+	$ch = curl_init();  
+ 
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+ 
+    $output = curl_exec($ch);
+ 	$communes = json_decode($output);
+    curl_close($ch);
+    return $response->withJSON(array("status" => 200, "message" => "Comunas", "data" => $communes));
+});
+
 function getHTML_register($token){
 	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
 	$fichero = str_replace("[token]", $token, $fichero);
