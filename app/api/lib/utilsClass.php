@@ -106,19 +106,26 @@ class order {
 		}
 	}
 
-	public function maxOrdersNow ($params) {
+	public function capacity ($params) {
 
 		$id_session = $params['id_session'];
 		$id_bar = $params['id_bar'];
 
 		$mysqli = getConnection();
 		$result = $mysqli->query("SELECT order_limit, (SELECT COUNT(*) FROM tbl_orders 
-			WHERE id_session = $id_session) AS num_orders FROM tbl_bar_settings WHERE id_bar = $id_bar");
+			WHERE id_session = $id_session AND state <> 2) AS num_orders FROM tbl_bar_settings WHERE id_bar = $id_bar");
 		
 		if ($result->num_rows > 0) {	
 			$row = $result->fetch_assoc();
-			$maxOrdersNow = $row['order_limit'] - $row['num_orders'];
-			return $maxOrdersNow;
+			$minValue = $row['num_orders'] + 1;
+			
+			if ($row['order_limit'] > $row['num_orders']) {
+				$value = $row['order_limit'] - $row['num_orders'];
+				return array("value" => $value, "minValue" => $minValue);
+			} else {
+				return array("value" => 0, "minValue" => $minValue);
+			}
+			
 		} else {
 			return false;
 		}

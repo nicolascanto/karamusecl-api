@@ -34,9 +34,9 @@ $app->post('/api/orders', function($request, $response, $args){
 
 			$order = new order;
 			
-			$maxOrdersNow = $order->maxOrdersNow(array("id_session" => $id, "id_bar" => $id_bar));
-			if ($maxOrdersNow < count($orderArr)) {
-				return $response->withJSON(array("status" => 406, "message" => "Cupos limitados", "capacity" => $maxOrdersNow));
+			$capacity = $order->capacity(array("id_session" => $id, "id_bar" => $id_bar));
+			if ($capacity['value'] < count($orderArr)) {
+				return $response->withJSON(array("status" => 406, "message" => "Cupos limitados", "capacity" => $capacity['value']));
 			}
 
 			$order_verified = $order->check_order(array("orderArr" => $orderArr, 
