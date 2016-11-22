@@ -40,9 +40,14 @@ $app->post('/api/sessions/{type}', function($request, $response, $args){
 				"message" => "No hay sesiones abiertas para cerrar"));
 		} else {
 			$result = $mysqli->query("UPDATE tbl_sessions SET active = false WHERE id_bar = $id_bar");
-			if ($result) {
-				return $response->withJSON(array("status" => 200, 
+			if ($mysqli->affected_rows > 0) {
+				$result = $mysqli->query("UPDATE tbl_access_tokens SET active = false WHERE id_bar = $id_bar");
+				if ($mysqli->affected_rows > 0) {
+					return $response->withJSON(array("status" => 200, 
 					"message" => "Se han cerrado todas las sesiones abiertas"));
+				} else {
+					return $response->withJSON(var_dump($mysqli));
+				}
 			}
 		}
 			break;

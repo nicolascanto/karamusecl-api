@@ -104,6 +104,30 @@ $app->put('/api/codes/{code}/state/{state}', function($request, $response, $args
 
 })->add($authorization);
 
+$app->get('/api/codes/validate/{code_client}', function($request, $response, $args){
+
+	$id_bar = $request->getAttribute('id_bar');
+	$code_client = $args['code_client'];
+	$mysqli = getConnection();
+	$session = new session;
+	$id_session = $session->id_session($id_bar);
+
+	if (isset($id_session['success']) && $id_session['success']) {
+		$code = new code;
+		$verify = $code->verify($code_client, $id_session['id']);
+
+		if (isset($verify['success']) && $verify['success']) {
+			return $response->withJSON(array("status" => 200, "message" => "Código verificado correctamente.", "code_client" => $code_client));
+		} else {
+			return $response->withJSON(array("status" => 201, "message" => "El código es inválido.", "code_client" => $code_client));
+		}
+		
+	} else {
+		return $response->withJSON(array("status" => 202, "message" => "Problemas al identificar la sesión.", "code_client" => $code_client));
+	}
+
+})->add($authorization);
+
 
 
 

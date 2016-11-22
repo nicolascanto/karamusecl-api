@@ -38,6 +38,7 @@ $authorization = function($request, $response, $next){
 			$row = $result->fetch_assoc();
 			$request = $request->withAttribute('id_bar', $row['id_bar']);
 			$request = $request->withAttribute('scope', $row['scope']);
+			$request = $request->withAttribute('token', $token_request);
 			return $next($request, $response);
 		}
 		
