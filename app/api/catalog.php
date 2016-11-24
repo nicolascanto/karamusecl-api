@@ -5,7 +5,16 @@ $app->get('/api/catalog/{filter}', function($request, $response, $args){
  	$filter = $args['filter'];
  	$sizePage = $request->getQueryParam('sizePage', $default = null);
  	$numPage = $request->getQueryParam('numPage', $default = null);
+ 	$id_bar = $request->getAttribute('id_bar');
+ 	$text_ad = null;
+
  	$mysqli = getConnection();
+ 	$result = $mysqli->query("SELECT text_ad FROM tbl_bar_settings WHERE id_bar = $id_bar");
+ 	if ($result->num_rows > 0) {
+ 		$row = $result->fetch_assoc();
+ 		$text_ad = $row['text_ad'];
+ 	}
+
  	$result = $mysqli->query("SELECT id FROM tbl_karaokes_old WHERE artist LIKE '%$filter%' 
  		OR song LIKE '%$filter%' AND active = true");
 
@@ -27,7 +36,8 @@ $app->get('/api/catalog/{filter}', function($request, $response, $args){
 		 		$dataPaging[] = $row;
 		 	}
 		 	return $response->withJSON(array(
-	 		"status" => 200, 
+	 		"status" => 200,
+	 		"text_ad" => $text_ad, 
 	 		"totalResults" => $totalResults,
 	 		"totalPages" => $dataResult['totalPages'], 
 		 	"data" => $dataPaging));
