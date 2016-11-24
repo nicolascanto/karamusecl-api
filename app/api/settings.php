@@ -24,7 +24,7 @@ $app->get('/api/settings', function($request, $response, $args){
 	$id_bar = $request->getAttribute('id_bar');
 
 	$mysqli = getConnection();
-	$result = $mysqli->query("SELECT * FROM tbl_bar_settings WHERE id_bar = $id_bar");
+	$result = $mysqli->query("SELECT tbl_bars.id, tbl_bars.name, tbl_bars.address, tbl_bar_settings.avatar, tbl_bar_settings.order_limit, tbl_bar_settings.text_ad, tbl_bar_settings.banner_ad FROM tbl_bars JOIN tbl_bar_settings ON tbl_bars.id = tbl_bar_settings.id_bar WHERE tbl_bars.id = $id_bar");
 
 	if ($result->num_rows > 0) {
 		$row = $result->fetch_assoc();
