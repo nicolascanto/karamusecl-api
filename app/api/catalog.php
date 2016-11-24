@@ -7,8 +7,9 @@ $app->get('/api/catalog/{filter}', function($request, $response, $args){
  	$numPage = $request->getQueryParam('numPage', $default = null);
  	$id_bar = $request->getAttribute('id_bar');
  	$text_ad = null;
-
  	$mysqli = getConnection();
+
+ 	// Agrega text_ad en la busqueda de karaokes
  	$result = $mysqli->query("SELECT text_ad FROM tbl_bar_settings WHERE id_bar = $id_bar");
  	if ($result->num_rows > 0) {
  		$row = $result->fetch_assoc();
