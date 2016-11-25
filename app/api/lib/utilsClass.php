@@ -72,7 +72,7 @@ class order {
 		if (isset($params['id_order']) && is_numeric($params['id_order'])) {
 
 			$id_order = $params['id_order'];
-			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes_old.artist, tbl_karaokes_old.song, tbl_karaokes_old.url, tbl_orders.state, tbl_orders.created_at 
+			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes_old.artist, tbl_karaokes_old.song, tbl_karaokes_old.url, tbl_orders.message, tbl_orders.state, tbl_orders.created_at 
 				FROM tbl_orders JOIN tbl_karaokes_old ON tbl_orders.id_karaoke = tbl_karaokes_old.id 
 				WHERE tbl_orders.id = $id_order AND tbl_orders.state <> 2");
 
@@ -85,7 +85,7 @@ class order {
 
 		} elseif (is_null($params) && $id_session) {
 
-			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes_old.artist, tbl_karaokes_old.song, tbl_karaokes_old.url, tbl_orders.state, tbl_orders.created_at 
+			$result = $mysqli->query("SELECT tbl_orders.id, tbl_orders.ticket, tbl_orders.origin, tbl_orders.code_client, tbl_karaokes_old.artist, tbl_karaokes_old.song, tbl_karaokes_old.url, tbl_orders.message, tbl_orders.state, tbl_orders.created_at 
 				FROM tbl_orders JOIN tbl_karaokes_old ON tbl_orders.id_karaoke = tbl_karaokes_old.id 
 				WHERE tbl_orders.id_session = $id_session AND tbl_orders.state <> 2 ORDER BY tbl_orders.state ASC, tbl_orders.created_at DESC");
 
