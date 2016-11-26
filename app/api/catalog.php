@@ -57,12 +57,13 @@ $app->post('/api/catalog', function($request, $response, $args){
 	$artist = isset($request->getParsedBody()['artist']) ? $request->getParsedBody()['artist'] : null;
 	$song = isset($request->getParsedBody()['song']) ? $request->getParsedBody()['song'] : null;
 	$url = isset($request->getParsedBody()['url']) ? $request->getParsedBody()['url'] : null;
+	$date = date('Y-m-d H:i:s');
 
 	if (is_null($artist) || is_null($song) || is_null($url)) {
 		return $response->withJSON(array("status" => 400, "message" => "Debes especificar artista, canción y url"));
 	} else {
 		$mysqli = getConnection();
-		$result = $mysqli->query("INSERT INTO tbl_karaokes_old (artist, song, url, active) VALUES ('$artist', '$song', '$url', false)");
+		$result = $mysqli->query("INSERT INTO tbl_karaokes_old (artist, song, url, active, created_at, updated_At) VALUES ('$artist', '$song', '$url', false, '$date', '$date')");
 		if ($result) {
 			return $response->withJSON(array("status" => 200, "message" => "Karaoke enviado", 
 				"data" => array("artist" => $artist, "song" => $song, "url" => $url)));

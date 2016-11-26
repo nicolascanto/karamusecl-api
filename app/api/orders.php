@@ -1,13 +1,13 @@
 <?php
 
 $app->post('/api/orders', function($request, $response, $args){
-
 	$id_bar = $request->getAttribute('id_bar');
 	$scope = $request->getAttribute('scope');
 	$orderArr = (isset($request->getParsedBody()['order'])) ? $request->getParsedBody()['order'] : array();
 	$origin = (isset($request->getParsedBody()['origin'])) ? $request->getParsedBody()['origin'] : null;
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
+	$date = date('Y-m-d H:i:s');
 
 	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
@@ -46,8 +46,8 @@ $app->post('/api/orders', function($request, $response, $args){
 				$verified = $order_verified['data'];
 				$mysqli = getConnection();
 				$stmt = $mysqli->prepare("INSERT INTO tbl_orders (id_bar, id_session, origin, code_client, ticket, 
-				id_karaoke, message, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-				$stmt->bind_param('iissiisi', $id_bar, $id, $origin, $code_client, $ticket, $id_karaoke, $message, $state);
+				id_karaoke, message, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+				$stmt->bind_param('iissiisiss', $id_bar, $id, $origin, $code_client, $ticket, $id_karaoke, $message, $state, $date, $date);
 
 				foreach ($verified as $_order) {
 					$message = $_order['message'];
@@ -79,12 +79,13 @@ $app->post('/api/orders', function($request, $response, $args){
 $app->put('/api/orders/{id_order}', function($request, $response, $args){
 
 	$state = (isset($request->getParsedBody()['state'])) ? $request->getParsedBody()['state'] : null;
+	$date = date('Y-m-d H:i:s');
 
 	if ((isset($args['id_order']) && is_numeric($args['id_order'])) && (!is_null($state) && is_numeric($state))) {
 	
 		$id_order = $args['id_order'];
 		$mysqli = getConnection();
-		$result = $mysqli->query("UPDATE tbl_orders SET state = $state WHERE id = $id_order");
+		$result = $mysqli->query("UPDATE tbl_orders SET state = $state, updated_at = '$date' WHERE id = $id_order");
 
 		if ($mysqli->affected_rows > 0) {
 			return $response->withJSON(array("status" => 200, "message" => "Se ha actualizado el estado del pedido"));

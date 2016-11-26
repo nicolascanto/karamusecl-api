@@ -33,6 +33,7 @@ $app->get('/api/codes/verify', function($request, $response, $args){
 $app->post('/api/codes/{lot}', function($request, $response, $args){
 
 	$id_bar = $request->getAttribute('id_bar');
+	$date = date('Y-m-d H:i:s');
 
 	if (isset($args['lot']) && is_numeric($args['lot'])) {
 		$mysqli = getConnection();
@@ -53,10 +54,9 @@ $app->post('/api/codes/{lot}', function($request, $response, $args){
 				if ($count_codes > 20) {
 					return $response->withJSON(array("status" => 201, "message" => "No se pueden generar más códigos"));
 				} else {
-				
-					$stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state) 
-						VALUES (?, ?, 0)");
-					$stmt->bind_param('ii', $id, $code);
+					$stmt = $mysqli->prepare("INSERT INTO tbl_session_codes (id_session, code, state, created_at, updated_at) 
+						VALUES (?, ?, 0, ?, ?)");
+					$stmt->bind_param('iiss', $id, $code, $date, $date);
 					for ($i = 0; $i < $count ; $i++) { 	
 						$code = mt_rand(1000,9999);
 						$stmt->execute();
@@ -82,6 +82,7 @@ $app->put('/api/codes/{code}/state/{state}', function($request, $response, $args
 	$id_bar = $request->getAttribute('id_bar');
 	$code = $args['code'];
 	$state = $args['state'];
+	$date = date('Y-m-d H:i:s');
 
 	$mysqli = getConnection();
 	$session = new session;
@@ -89,7 +90,7 @@ $app->put('/api/codes/{code}/state/{state}', function($request, $response, $args
 
 	if (isset($id_session['success']) && $id_session['success']) {
 		$id = $id_session['id'];
-		$mysqli->query("UPDATE tbl_session_codes SET state = $state 
+		$mysqli->query("UPDATE tbl_session_codes SET state = $state, updated_at = '$date' 
 			WHERE code = $code AND id_session = $id");
 		
 		if ($mysqli->affected_rows > 0) {

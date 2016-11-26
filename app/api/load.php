@@ -78,6 +78,7 @@ $app->put('/api/load/karaokes/insert/url', function($request, $response, $args){
 
 	// id_karaoke es donde va a empezar el UPDATE
 	$id_karaoke = null;
+	$date = date('Y-m-d H:i:s');
 
 	$data = array();
 	$mysqli = getConnection();
@@ -96,8 +97,8 @@ $app->put('/api/load/karaokes/insert/url', function($request, $response, $args){
 	 		$data[] = $row;
 	 	}
 
-	 	$stmt = $mysqli->prepare("UPDATE tbl_karaokes_old SET url = ? WHERE id = ?");
- 		$stmt->bind_param('si', $url_video, $id);
+	 	$stmt = $mysqli->prepare("UPDATE tbl_karaokes_old SET url = ?, updated_at = ? WHERE id = ?");
+ 		$stmt->bind_param('ssi', $url_video, $date, $id);
 
  		require_once('lib/webscraping.php');
 

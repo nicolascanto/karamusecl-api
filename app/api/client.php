@@ -35,6 +35,7 @@ $app->post('/api/client/access_token', function($request, $response, $args){
 	
 	$id_bar = (isset($request->getParsedBody()['id_bar'])) ? $request->getParsedBody()['id_bar'] : null;
 	$origin = (isset($request->getParsedBody()['origin'])) ? $request->getParsedBody()['origin'] : null;
+	$date = date('Y-m-d H:i:s');
 
 	if (is_null($id_bar) || is_null($origin)) {
 		return $response->withJSON(array("status" => 402, "message" => "Debes especificar id_bar y origin"));
@@ -48,8 +49,8 @@ $app->post('/api/client/access_token', function($request, $response, $args){
 	$new_token = getToken();
 	$scope = "CLIENT";
 	$active = true;
-	$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, scope, active, origin) 
-		VALUES ($id_bar, '$new_token', '$scope', $active, '$origin')");
+	$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, scope, active, origin, created_At, updated_at) 
+		VALUES ($id_bar, '$new_token', '$scope', $active, '$origin', '$date', '$date')");
 
 	if ($result) {
 		return $response->withJSON(array("status" => 200, "message" => "Token creado", "token" => $new_token));

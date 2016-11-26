@@ -5,6 +5,7 @@ $app->post('/api/login', function($request, $response, $args){
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
 	$origin = (isset($request->getParsedBody()['origin'])) ? $request->getParsedBody()['origin'] : null;
 	$response_data = array("email" => $email);
+	$date = date('Y-m-d H:i:s');
 
 	if (is_null($email) || is_null($password)) {
 		return $response->withJSON(array(
@@ -35,8 +36,8 @@ $app->post('/api/login', function($request, $response, $args){
 			$new_token = getToken();
 			$scope = "DJ";
 			$active = true;
-			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, scope, active, origin) 
-				VALUES ($id_bar, '$new_token', '$scope', $active, '$origin')");
+			$result = $mysqli->query("INSERT INTO tbl_access_tokens (id_bar, token, scope, active, origin, created_at, updated_at) 
+				VALUES ($id_bar, '$new_token', '$scope', $active, '$origin', '$date', '$date')");
 
 			if ($result) {
 
@@ -99,6 +100,7 @@ $app->post('/api/register', function($request, $response, $args){
 	$password = (isset($request->getParsedBody()['password'])) ? $request->getParsedBody()['password'] : null;
 	$active = (isset($request->getParsedBody()['active'])) ? $request->getParsedBody()['active'] : 0;
 	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
+	$date = date('Y-m-d H:i:s');
 
 
 	$response_data = array(
@@ -134,14 +136,14 @@ $app->post('/api/register', function($request, $response, $args){
 			$result = $mysqli->query("UPDATE tbl_bars 
 			SET rut = '$rut', name = '$name', address = '$address', phone = '$phone', email = '$email', 
 			region = '$region', commune = '$commune', province = '$province', active = $active, 
-			password = '$password' WHERE email = '$email'");
+			password = '$password', updated_at = '$date' WHERE email = '$email'");
 
 			if ($result) {
 				$message1 = "Se ha completado el segundo registro del bar";
 				
 				// INVALIDA TOKEN DE REGISTRO
 				$state = false;
-				$result = $mysqli->query("UPDATE tbl_active_tokens SET state = $state WHERE token = '$token'");	
+				$result = $mysqli->query("UPDATE tbl_active_tokens SET state = $state, updated_at = '$date' WHERE token = '$token'");	
 
 				if ($result) {
 					$message2 = "Se ha desactivado el token";
@@ -168,19 +170,19 @@ $app->post('/api/register', function($request, $response, $args){
 				"data" => $response_data));
 		}
 	} else {
-		$result = $mysqli->query("INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password) VALUES (null, null, null, '$phone', '$email', null, 
-			null, null, null, null)");
+		$result = $mysqli->query("INSERT INTO tbl_bars (rut, name, address, phone, email, region, province, commune, active, password, created_at, updated_at) VALUES (null, null, null, '$phone', '$email', null, 
+			null, null, null, null, '$date', '$date')");
 
 		$last_id_bar = $mysqli->insert_id;
 
-		$result = $mysqli->query("INSERT INTO tbl_bar_settings (id_bar, order_limit, avatar, banner_ad, text_ad) 
-			VALUES ($last_id_bar, 20, null, null, null)");
+		$result = $mysqli->query("INSERT INTO tbl_bar_settings (id_bar, order_limit, avatar, banner_ad, text_ad, created_at, updated_at) 
+			VALUES ($last_id_bar, 20, null, null, null, '$date', '$date')");
 
 		if ($result) {
 			$token = getToken();
 			$active = true;
-			$result = $mysqli->query("INSERT INTO tbl_active_tokens (id_bar, token, active) 
-			VALUES ($last_id_bar, '$token', $active)");
+			$result = $mysqli->query("INSERT INTO tbl_active_tokens (id_bar, token, active, created_at, updated_at) 
+			VALUES ($last_id_bar, '$token', $active, '$date', '$date')");
 
 			if ($result) {
 				$message1 = "Se ha creado el token de activación";
@@ -268,6 +270,8 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 	$email = (isset($request->getParsedBody()['email'])) ? $request->getParsedBody()['email'] : null;
 	$token = (isset($request->getParsedBody()['token'])) ? $request->getParsedBody()['token'] : null;
 	$new_pass = (isset($request->getParsedBody()['new_pass'])) ? $request->getParsedBody()['new_pass'] : null;
+	$date = date('Y-m-d H:i:s');
+
 	$response_data = array(
 		"email" => $email,
 		"token" => $token,
@@ -285,8 +289,8 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 							$id_bar = $row['id'];
 							$token = getToken();
 							$active = true;
-							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active) 
-								VALUES ($id_bar, '$token', $active)");
+							$result = $mysqli->query("INSERT INTO tbl_renew_pass (id_bar, token, active, created_at, updated_at) 
+								VALUES ($id_bar, '$token', $active, '$date', '$date')");
 
 							if ($result) {
 								$opts = array(
@@ -341,12 +345,12 @@ $app->post('/api/register/renewpass/{step}', function($request, $response, $args
 							$new_pass = password_hash($new_pass, PASSWORD_DEFAULT);
 
 							$result = $mysqli->query("UPDATE tbl_bars 
-								SET password = '$new_pass'
+								SET password = '$new_pass', updated_at = '$date'
 								WHERE email = '$email'");
 
 							if ($result) {
 								$result = $mysqli->query("UPDATE tbl_renew_pass 
-									SET active = false
+									SET active = false, updated_at = '$date'
 									WHERE id_bar = $id_bar");
 								if ($result) {
 									return $response->withJSON(array(

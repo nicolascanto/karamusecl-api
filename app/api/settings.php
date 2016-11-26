@@ -3,12 +3,13 @@ $app->put('/api/settings/order_limit/{limit}', function($request, $response, $ar
 
 	$limit = (isset($args['limit'])) ? $args['limit'] : null;
 	$id_bar = $request->getAttribute('id_bar');
+	$date = date('Y-m-d H:i:s');
 
 	if (is_null($limit) || !is_numeric($limit)) {
 		return $response->withJSON(array("status" => 400, "message" => "Límite númerico requerido"));
 	} else {
 		$mysqli = getConnection();
-		$result = $mysqli->query("UPDATE tbl_bar_settings SET order_limit = $limit WHERE id_bar = $id_bar");
+		$result = $mysqli->query("UPDATE tbl_bar_settings SET order_limit = $limit, updated_at = '$date' WHERE id_bar = $id_bar");
 
 		if ($mysqli->affected_rows > 0) {
 			return $response->withJSON(array("status" => 200, "message" => "Límite de pedidos actualizado"));
@@ -44,6 +45,7 @@ $app->put('/api/settings', function($request, $response, $args){
 	$address = isset($request->getParsedBody()['address']) ? $request->getParsedBody()['address'] : null;
 	$banner_ad = isset($request->getParsedBody()['banner_ad']) ? $request->getParsedBody()['banner_ad'] : null;
 	$text_ad = isset($request->getParsedBody()['text_ad']) ? $request->getParsedBody()['text_ad'] : null;
+	$date = date('Y-m-d H:i:s');
 
 	$session = new session;
 	$id_session = $session->id_session($id_bar);
@@ -83,42 +85,42 @@ $app->put('/api/settings', function($request, $response, $args){
 			$mysqli = getConnection();
 
 			if (!is_null($updateArr[0]['order_limit'])) {
-				$result = $mysqli->query("UPDATE tbl_bar_settings SET order_limit = $order_limit WHERE id_bar = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bar_settings SET order_limit = $order_limit, updated_at = '$date' WHERE id_bar = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[0]['updated'] = true;
 				}
 			}
 
 			if (!is_null($updateArr[1]['avatar'])) {
-				$result = $mysqli->query("UPDATE tbl_bar_settings SET avatar = '$avatar' WHERE id_bar = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bar_settings SET avatar = '$avatar', updated_at = '$date' WHERE id_bar = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[1]['updated'] = true;
 				}
 			}
 
 			if (!is_null($updateArr[2]['bar_name'])) {
-				$result = $mysqli->query("UPDATE tbl_bars SET name = '$bar_name' WHERE id = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bars SET name = '$bar_name', updated_at = '$date' WHERE id = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[2]['updated'] = true;
 				}
 			}
 
 			if (!is_null($updateArr[3]['address'])) {
-				$result = $mysqli->query("UPDATE tbl_bars SET address = '$address' WHERE id = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bars SET address = '$address', updated_at = '$date' WHERE id = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[3]['updated'] = true;
 				}
 			}
 
 			if (!is_null($updateArr[4]['banner_ad'])) {
-				$result = $mysqli->query("UPDATE tbl_bar_settings SET banner_ad = '$banner_ad' WHERE id_bar = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bar_settings SET banner_ad = '$banner_ad', updated_at = '$date' WHERE id_bar = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[4]['updated'] = true;
 				}
 			}
 
 			if (!is_null($updateArr[5]['text_ad'])) {
-				$result = $mysqli->query("UPDATE tbl_bar_settings SET text_ad = '$text_ad' WHERE id_bar = $id_bar");
+				$result = $mysqli->query("UPDATE tbl_bar_settings SET text_ad = '$text_ad', updated_at = '$date' WHERE id_bar = $id_bar");
 				if ($mysqli->affected_rows > 0) {
 					$updateArr[5]['updated'] = true;
 				}
