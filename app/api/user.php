@@ -441,13 +441,13 @@ $app->get('/api/dpa/regiones/{codigo_r}/provincias/{codigo_p}/comunas', function
 });
 
 function getHTML_register($token){
-	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/register.html');
+	$fichero = file_get_contents('http://dev.karamuse.cl/register.html');
 	$fichero = str_replace("[token]", $token, $fichero);
 	return $fichero;
 }
 
 function getHTML_renew_pass($email, $token){
-	$fichero = file_get_contents('http://karamuse.cl/karamusecl/html/token_renew_pass.html');
+	$fichero = file_get_contents('http://dev.karamuse.cl/token_renew_pass.html');
 	$fichero = str_replace("[email]", $email, $fichero);
 	$fichero = str_replace("[token]", $token, $fichero);
 	return $fichero;
