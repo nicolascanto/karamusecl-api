@@ -54,7 +54,7 @@ $app->put('/api/settings', function($request, $response, $args){
 		$id = $id_session['id'];
 		$order = new order;		
 		$capacity = $order->capacity(array("id_session" => $id, "id_bar" => $id_bar));
-		$maxValue = 60;
+		$maxValue = 1000;
 
 		if (!is_null($order_limit) && is_numeric($order_limit) && $order_limit > $maxValue) {
 			return $response->withJSON(array("status" => 400, "message" => "Límite de pedidos excedido", "maxValue" => $maxValue));
